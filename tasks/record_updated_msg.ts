@@ -17,23 +17,24 @@ const recordUpdateMsg: RecordUpdateMsg = flow(
     TO.fromNullable(client.channels.cache.get(process.env.BOT_SENDING_CHANNEL_ID || ''))
   ),
   TO.filter(({ sendChannel }) => sendChannel.isTextBased()),
-  TO.bind('sendString', ({ newMsg }) => {
-    const channelName = newMsg.channel.isTextBased()
-      ? (newMsg.channel as GuildTextBasedChannel).name
-      : 'Other';
+  TO.bind(
+    'sendString',
+    flow(({ newMsg }) => {
+      const channelName = newMsg.channel.isTextBased()
+        ? (newMsg.channel as GuildTextBasedChannel).name
+        : 'Other';
 
-    const userName = newMsg.author?.username || '';
-    const discriminator = newMsg.author?.discriminator || '';
+      const userName = newMsg.author?.username || '';
+      const discriminator = newMsg.author?.discriminator || '';
 
-    return TO.some(
-      `TS version ${channelName} **[Created：${format(
+      return `TS version ${channelName} **[Created：${format(
         newMsg.createdAt,
         'yyyy/MM/dd HH:mm'
       )}]** ${userName}(#${discriminator}) **Edit**：\n${
         newMsg.content
-      }\n------------------------------------`
-    );
-  }),
+      }\n------------------------------------`;
+    }, TO.some)
+  ),
   TO.chain(({ sendChannel, oldMsg, sendString }) =>
     TO.tryCatch(() =>
       (sendChannel as GuildTextBasedChannel).send({

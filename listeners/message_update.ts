@@ -2,8 +2,8 @@ import { Client, Message, PartialMessage, Awaitable } from 'discord.js';
 import { pipe } from 'fp-ts/function';
 import * as O from 'fp-ts/Option';
 import * as TO from 'fp-ts/TaskOption';
-import excludeChannels from '../store/excludeChannels';
-import recordUpdateMsg from '../tasks/recordUpdateMsg';
+import excludeChannels from '../store/exclude_channels';
+import recordUpdatedMsg from '../tasks/record_updated_msg';
 
 interface MessageUpdateListener {
   (client: Client<true>): (
@@ -18,7 +18,7 @@ const messageUpdateListener: MessageUpdateListener = (client) => (oldMsg, newMsg
     O.filter((params) => !params.newMsg.author?.bot),
     O.filter((params) => !excludeChannels.hasChannel(params.newMsg.channelId)),
     TO.fromOption,
-    TO.chain(recordUpdateMsg)
+    TO.chain(recordUpdatedMsg)
   )();
 };
 
