@@ -40,7 +40,7 @@ const recordUpdateMsg: RecordUpdateMsg = flow(
         content: sendString,
         allowedMentions: { parse: [] },
         reply: {
-          messageReference: oldMsg as Message<boolean>,
+          messageReference: oldMsg.reference?.messageId || '',
         },
       })
     )

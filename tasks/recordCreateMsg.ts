@@ -30,25 +30,24 @@ const recordCreateMsg: RecordCreateMsg = flow(
       )}]** ${userName}(#${discriminator})：\n${msg.content}\n------------------------------------`
     );
   }),
-  TO.chain(({ msg, sendChannel, sendString }) =>
-    pipe(
-      TO.tryCatch(() =>
-        (sendChannel as GuildTextBasedChannel).send({
-          content: sendString,
-          allowedMentions: { parse: [] },
-        })
-      ),
-      TO.map(
-        R.tap((sentMsg) => {
-          msg.reference = {
-            channelId: sentMsg.channelId,
-            guildId: sentMsg.guildId,
-            messageId: sentMsg.id,
-          };
-        })
-      )
+  TO.bind('sentMsg', ({ sendChannel, sendString }) =>
+    TO.tryCatch(() =>
+      (sendChannel as GuildTextBasedChannel).send({
+        content: sendString,
+        allowedMentions: { parse: [] },
+      })
     )
-  )
+  ),
+  TO.map(
+    R.tap(({ sentMsg, msg }) => {
+      msg.reference = {
+        channelId: sentMsg.channelId,
+        guildId: sentMsg.guildId,
+        messageId: sentMsg.id,
+      };
+    })
+  ),
+  TO.map(R.prop('sentMsg'))
 );
 
 export default recordCreateMsg;
