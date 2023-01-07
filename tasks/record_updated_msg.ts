@@ -27,7 +27,7 @@ const recordUpdateMsg: RecordUpdateMsg = flow(
       const userName = newMsg.author?.username || '';
       const discriminator = newMsg.author?.discriminator || '';
 
-      return `TS version ${channelName} **[Created：${format(
+      return `${channelName} **[Created：${format(
         newMsg.createdAt,
         'yyyy/MM/dd HH:mm'
       )}]** ${userName}(#${discriminator}) **Edit**：\n${

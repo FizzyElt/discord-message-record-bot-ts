@@ -25,7 +25,7 @@ const recordCreateMsg: RecordCreateMsg = flow(
       const userName = msg.author?.username || '';
       const discriminator = msg.author?.discriminator || '';
 
-      return `TS version${channelName} **[Created：${format(
+      return `${channelName} **[Created：${format(
         msg.createdAt,
         'yyyy/MM/dd HH:mm'
       )}]** ${userName}(#${discriminator})：\n${msg.content}\n------------------------------------`;
