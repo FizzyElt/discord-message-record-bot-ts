@@ -14,6 +14,7 @@ import * as TO from 'fp-ts/TaskOption';
 import * as Map from 'fp-ts/Map';
 import * as R from 'ramda';
 import exclude_channels from '../store/exclude_channels';
+import user_black_list from '../store/user_black_list';
 import {
   getCategoryTextChannels,
   getCommandOptionString,
@@ -123,9 +124,7 @@ const banUser = (client: Client<true>) => (interaction: CommandInteraction) =>
       return pipe(
         client.users.cache.find(R.propEq('id', userId)),
         O.fromNullable,
-        O.map(
-          R.tap((user) => {}) // TODO: add user to blackList
-        ),
+        O.map(R.tap((user) => user_black_list.addUser(user.id, mins))),
         O.map((user) => `${user.username} 禁言 ${mins} 分鐘`)
       );
     }),
@@ -140,7 +139,9 @@ const unbanUser = (client: Client<true>) => (interaction: CommandInteraction) =>
         getCommandOptionString('user_id')(interaction),
         (userId) => client.users.cache.find(R.propEq('id', userId)),
         O.fromNullable,
-        O.map((user) => (false ? `${user.username} 重穫自由` : '此人沒有被禁言')) // TODO: remove user from blackList
+        O.map((user) =>
+          user_black_list.removeUser(user.id) ? `${user.username} 重穫自由` : '此人沒有被禁言'
+        )
       )
     ),
     O.getOrElse(R.always('找不到使用者'))

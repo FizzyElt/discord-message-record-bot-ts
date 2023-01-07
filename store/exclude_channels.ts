@@ -1,4 +1,3 @@
-import * as IO from 'fp-ts/IO';
 import * as R from 'ramda';
 import dotenv from 'dotenv';
 
