@@ -1,8 +1,8 @@
 import { Client, Message, PartialMessage, GuildTextBasedChannel } from 'discord.js';
 import * as TO from 'fp-ts/TaskOption';
+import * as R from 'ramda';
 import { flow } from 'fp-ts/function';
 import { format } from 'date-fns';
-import * as R from 'ramda';
 
 interface RecordCreateMsg {
   (params: { client: Client<true>; msg: Message<boolean> | PartialMessage }): TO.TaskOption<

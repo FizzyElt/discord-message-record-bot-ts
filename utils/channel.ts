@@ -15,15 +15,14 @@ export const getCategoryTextChannels = (channel: CategoryChannel) =>
 
 export const pickChannelIdAndName = R.pick(['id', 'name']);
 
-export const getCommandOptionOfType =
-  (type: ApplicationCommandOptionType) =>
-  (optionName: string) =>
-  (interaction: CommandInteraction) =>
+export const getCommandOptionOfType = R.curry(
+  (type: ApplicationCommandOptionType, optionName: string, interaction: CommandInteraction) =>
     pipe(
       interaction.options.data.find(R.propEq('name', optionName)),
       O.fromNullable,
       O.filter(R.propEq('type', type))
-    );
+    )
+);
 
 export const getCommandOptionString = (optionName: string) =>
   flow(

@@ -21,17 +21,16 @@ const checkBannedUser: CheckBannedUser = (msg) =>
         R.not
       )
     ),
-    O.map(
+    TO.fromOption,
+    TO.chainFirst(() => TO.tryCatch(() => msg.delete())),
+    TO.chain(
       flow(
         format('yyyy-MM-dd HH:mm:ss'),
-        (dateString) => `你已被禁言，下次可發言時間為 UTC ${dateString}`
+        (dateString) => `你已被禁言，下次可發言時間為 UTC ${dateString}`,
+        (sendString) =>
+          TO.tryCatch<Message<false> | Message<true>>(() => msg.channel.send(sendString))
       )
-    ),
-    TO.fromOption,
-    TO.chain((sendString) =>
-      TO.tryCatch<Message<false> | Message<true>>(() => msg.channel.send(sendString))
-    ),
-    TO.chain(() => TO.tryCatch(() => msg.delete()))
+    )
   );
 
 export default checkBannedUser;
