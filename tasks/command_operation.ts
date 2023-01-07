@@ -20,6 +20,7 @@ import {
   getCommandOptionInt,
   pickChannelIdAndName,
 } from '../utils/channel';
+import { CommandName } from '../slash_command/command';
 
 const isAdmin = (interaction: CommandInteraction) =>
   interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || false;
@@ -35,10 +36,8 @@ const getTextChannelsInfo = flow<
 
 const getTextChannelInfo = flow<[TextChannel], { id: string; name: string }>(pickChannelIdAndName);
 
-const addChannels = (params: { client: Client<true>; interaction: CommandInteraction }) => {
-  const { client, interaction } = params;
-
-  return pipe(
+const addChannels = (client: Client<true>) => (interaction: CommandInteraction) =>
+  pipe(
     O.some(interaction),
     O.map(getCommandOptionString('id')),
     O.chain((idOrName) =>
@@ -69,12 +68,9 @@ const addChannels = (params: { client: Client<true>; interaction: CommandInterac
     ),
     O.getOrElse(notFoundChannel)
   );
-};
 
-const removeChannels = (params: { client: Client<true>; interaction: CommandInteraction }) => {
-  const { client, interaction } = params;
-
-  return pipe(
+const removeChannels = (client: Client<true>) => (interaction: CommandInteraction) =>
+  pipe(
     O.some(interaction),
     O.map(getCommandOptionString('id')),
     O.chain((idOrName) =>
@@ -107,7 +103,6 @@ const removeChannels = (params: { client: Client<true>; interaction: CommandInte
     ),
     O.getOrElse(notFoundChannel)
   );
-};
 
 const listChannels = () =>
   pipe(
@@ -118,9 +113,8 @@ const listChannels = () =>
     (names) => `目前排除的頻道有：\n${names}`
   );
 
-const banUser = (params: { client: Client<true>; interaction: CommandInteraction }) => {
-  const { interaction, client } = params;
-  return pipe(
+const banUser = (client: Client<true>) => (interaction: CommandInteraction) =>
+  pipe(
     isAdmin(interaction) ? O.none : O.some('不是管理員還敢 ban 人阿'),
     O.alt(() => {
       const userId = getCommandOptionString('user_id')(interaction);
@@ -137,22 +131,31 @@ const banUser = (params: { client: Client<true>; interaction: CommandInteraction
     }),
     O.getOrElse(R.always('找不到使用者'))
   );
-};
 
-const unbanUser = (params: { client: Client<true>; interaction: CommandInteraction }) => {
-  const { interaction, client } = params;
-  return pipe(
+const unbanUser = (client: Client<true>) => (interaction: CommandInteraction) =>
+  pipe(
     isAdmin(interaction) ? O.none : O.some('你不是管理員，你沒有權限解 ban'),
     O.alt(() =>
       pipe(
         getCommandOptionString('user_id')(interaction),
         (userId) => client.users.cache.find(R.propEq('id', userId)),
         O.fromNullable,
-        O.map((user) => (false ? `${user.username} 重穫自由` : '此人沒有被禁言'))
+        O.map((user) => (false ? `${user.username} 重穫自由` : '此人沒有被禁言')) // TODO: remove user from blackList
       )
     ),
     O.getOrElse(R.always('找不到使用者'))
   );
+
+const getOperationByCommand = (client: Client<true>) => {
+  const eqCommandName = R.propEq('commandName');
+  return R.cond([
+    [eqCommandName(CommandName.add_channels), addChannels(client)],
+    [eqCommandName(CommandName.remove_channels), removeChannels(client)],
+    [eqCommandName(CommandName.channel_list), listChannels],
+    [eqCommandName(CommandName.ban_user), banUser(client)],
+    [eqCommandName(CommandName.unban_user), unbanUser(client)],
+    [R.T, R.always('不支援的指令')],
+  ]);
 };
 
 interface CommandOperation {
@@ -162,6 +165,8 @@ interface CommandOperation {
   }): TO.TaskOption<InteractionResponse>;
 }
 
-const commandOperation: CommandOperation = (params) => {
-  return TO.tryCatch(() => params.interaction.reply('123'));
+export const commandOperation: CommandOperation = (params) => {
+  return pipe(params.interaction, getOperationByCommand(params.client), (replyMsg) =>
+    TO.tryCatch(() => params.interaction.reply(replyMsg))
+  );
 };
