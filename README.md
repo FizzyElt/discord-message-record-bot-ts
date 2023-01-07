@@ -11,5 +11,5 @@ Implement with functional programming
 
 ## functions
 - [X] record message
-- [ ] discord command operations
+- [X] discord command operations
 - [ ] discord invite link guard
