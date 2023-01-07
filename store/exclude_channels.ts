@@ -18,50 +18,43 @@ interface HasChannel {
 const hasChannel: HasChannel = (id) => excludeChannels.has(id);
 
 interface GetChannelMap {
-  (): IO.IO<Map<string, string>>;
+  (): Map<string, string>;
 }
 
-const getChannelMap: GetChannelMap = () => () => excludeChannels;
+const getChannelMap: GetChannelMap = () => excludeChannels;
 
 interface AddChannel {
-  (params: { id: string; name: string }): IO.IO<Map<string, string>>;
+  (params: { id: string; name: string }): Map<string, string>;
 }
 
-const addChannel: AddChannel =
-  ({ id, name = '' }) =>
-  () =>
-    excludeChannels.set(id, name);
+const addChannel: AddChannel = ({ id, name = '' }) => excludeChannels.set(id, name);
 
 interface AddChannels {
-  (list: Array<{ id: string; name: string }>): IO.IO<void>;
+  (list: Array<{ id: string; name: string }>): void;
 }
 
-const addChannels: AddChannels =
-  (list = []) =>
-  () =>
-    list.forEach(({ id, name }) => excludeChannels.set(id, name));
+const addChannels: AddChannels = (list = []) =>
+  list.forEach(({ id, name }) => excludeChannels.set(id, name));
 
 interface RemoveChannel {
-  (id: string): IO.IO<boolean>;
+  (id: string): boolean;
 }
 
-const removeChannel: RemoveChannel = (id) => () => {
+const removeChannel: RemoveChannel = (id) => {
   if (R.equals(id, sendedChannel.id)) return false;
 
   return excludeChannels.delete(id);
 };
 
 interface RemoveChannels {
-  (ids: Array<string>): IO.IO<void>;
+  (ids: Array<string>): void;
 }
 
-const removeChannels: RemoveChannels =
-  (ids = []) =>
-  () => {
-    ids.filter(R.equals(sendedChannel.id)).forEach((id) => {
-      excludeChannels.delete(id);
-    });
-  };
+const removeChannels: RemoveChannels = (ids = []) => {
+  ids.filter(R.equals(sendedChannel.id)).forEach((id) => {
+    excludeChannels.delete(id);
+  });
+};
 
 export default {
   hasChannel,
