@@ -1,4 +1,5 @@
 import { REST } from '@discordjs/rest';
+import { SlashCommandBuilder } from '@discordjs/builders';
 import { Routes } from 'discord-api-types/v10';
 import dotenv from 'dotenv';
 import * as TE from 'fp-ts/TaskEither';
@@ -12,10 +13,14 @@ const guildId = process.env.GUILD_ID || '';
 
 const rest = new REST({ version: '10' }).setToken(token);
 
-const pushCommands = (params: { clientId: string; guildId: string }) => {
+const pushCommands = (params: {
+  clientId: string;
+  guildId: string;
+  commands: Array<Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>>;
+}) => {
   return TE.tryCatch(
     () =>
-      rest.put(Routes.applicationGuildCommands(clientId, guildId), {
+      rest.put(Routes.applicationGuildCommands(params.clientId, params.guildId), {
         body: commands.map((command) => command.toJSON()),
       }),
     (err) => err
@@ -23,9 +28,9 @@ const pushCommands = (params: { clientId: string; guildId: string }) => {
 };
 
 pipe(
-  pushCommands({ clientId, guildId }),
+  pushCommands({ clientId, guildId, commands }),
   TE.match(
-    (err) => console.log('command push fail', err),
+    (err) => console.error('command push fail', err),
     (res) => console.log('command push success', res)
   )
 )();

@@ -61,14 +61,28 @@ export const commands = [
     .setName(CommandName.ban_user)
     .setDescription('ban user')
     .addStringOption(
-      new SlashCommandStringOption().setName('user_id').setMaxLength(50).setRequired(true)
+      new SlashCommandStringOption()
+        .setName('user_id')
+        .setDescription('user id')
+        .setMaxLength(150)
+        .setRequired(true)
     )
     .addIntegerOption(
       new SlashCommandIntegerOption()
         .setName('time')
+        .setDescription('time(mins)')
         .setChoices(...minsChoices.map(([name, value]) => createNumberChoice(name, value)))
         .setRequired(true)
     ),
 
-  new SlashCommandBuilder().setName(CommandName.unban_user).setDescription('unban user'),
+  new SlashCommandBuilder()
+    .setName(CommandName.unban_user)
+    .setDescription('unban user')
+    .addStringOption(
+      new SlashCommandStringOption()
+        .setName('user_id')
+        .setDescription('user id')
+        .setMaxLength(150)
+        .setRequired(true)
+    ),
 ];
