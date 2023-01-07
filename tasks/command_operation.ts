@@ -42,7 +42,12 @@ const addChannels = (client: Client<true>) => (interaction: CommandInteraction) 
     O.some(interaction),
     O.map(getCommandOptionString('id')),
     O.chain((idOrName) =>
-      O.fromNullable(client.channels.cache.find(R.whereEq({ id: idOrName, name: idOrName })))
+      O.fromNullable(
+        client.channels.cache.find(
+          // @ts-ignore types/ramda not defined "whereAny"
+          R.whereAny({ id: R.equals(idOrName), name: R.equals(idOrName) })
+        )
+      )
     ),
     O.map(
       R.cond([
@@ -75,7 +80,12 @@ const removeChannels = (client: Client<true>) => (interaction: CommandInteractio
     O.some(interaction),
     O.map(getCommandOptionString('id')),
     O.chain((idOrName) =>
-      O.fromNullable(client.channels.cache.find(R.whereEq({ id: idOrName, name: idOrName })))
+      O.fromNullable(
+        client.channels.cache.find(
+          // @ts-ignore types/ramda not defined "whereAny"
+          R.whereAny({ id: R.equals(idOrName), name: R.equals(idOrName) })
+        )
+      )
     ),
     O.map(
       R.cond([
@@ -87,7 +97,7 @@ const removeChannels = (client: Client<true>) => (interaction: CommandInteractio
               R.tap(
                 flow(getCategoryTextChannels, R.map(R.prop('id')), exclude_channels.removeChannels)
               ),
-              (channel) => `已排除 **${channel.name}** 下的所有文字頻道`
+              (channel) => `已監聽 **${channel.name}** 下的所有文字頻道`
             ),
         ],
         [
@@ -96,7 +106,7 @@ const removeChannels = (client: Client<true>) => (interaction: CommandInteractio
             pipe(
               channel as TextChannel,
               R.tap(flow(getTextChannelInfo, R.prop('id'), exclude_channels.removeChannel)),
-              (channel) => `已排除 **${channel.name}**`
+              (channel) => `已監聽 **${channel.name}**`
             ),
         ],
         [R.T, notSupportChannelType],
