@@ -6,6 +6,7 @@ import * as R from 'ramda';
 import excludeChannels from '../store/exclude_channels';
 import recordCreatedMsg from '../tasks/record_created_msg';
 import checkBannedUser from '../tasks/check_banned_user';
+import inviteLinkGuard from '../tasks/invite_link_guard';
 
 interface MessageCreateListener {
   (client: Client<true>): (msg: Message<boolean>) => Awaitable<void>;
@@ -18,6 +19,16 @@ const messageCreateListener: MessageCreateListener = (client) => (msg) => {
       flow(
         R.prop('msg'),
         checkBannedUser,
+        TO.match(
+          () => O.some(0),
+          () => O.none
+        )
+      )
+    ),
+    TO.chainFirst(
+      flow(
+        R.prop('msg'),
+        inviteLinkGuard,
         TO.match(
           () => O.some(0),
           () => O.none
