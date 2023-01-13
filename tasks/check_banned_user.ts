@@ -7,12 +7,8 @@ import { isAfter } from 'date-fns';
 import * as R from 'ramda';
 import userBlackList from '../store/user_black_list';
 
-interface CheckBannedUser {
-  (msg: Message<boolean>): TO.TaskOption<Message<boolean>>;
-}
-
-const checkBannedUser: CheckBannedUser = (msg) =>
-  pipe(
+function checkBannedUser(msg: Message<boolean>): TO.TaskOption<Message<boolean>> {
+  return pipe(
     userBlackList.getBanedUser(msg.author.id),
     O.filter((date) =>
       pipe(
@@ -32,5 +28,6 @@ const checkBannedUser: CheckBannedUser = (msg) =>
       )
     )
   );
+}
 
 export default checkBannedUser;

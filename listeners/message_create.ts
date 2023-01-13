@@ -8,38 +8,36 @@ import recordCreatedMsg from '../tasks/record_created_msg';
 import checkBannedUser from '../tasks/check_banned_user';
 import inviteLinkGuard from '../tasks/invite_link_guard';
 
-interface MessageCreateListener {
-  (client: Client<true>): (msg: Message<boolean>) => Awaitable<void>;
+function messageCreateListener(client: Client<true>) {
+  return (msg: Message<boolean>): Awaitable<void> => {
+    pipe(
+      TO.some({ client, msg }),
+      TO.chainFirst(
+        flow(
+          R.prop('msg'),
+          checkBannedUser,
+          TO.match(
+            () => O.some(0),
+            () => O.none
+          )
+        )
+      ),
+      TO.chainFirst(
+        flow(
+          R.prop('msg'),
+          inviteLinkGuard,
+          TO.match(
+            () => O.some(0),
+            () => O.none
+          )
+        )
+      ),
+      TO.filter(({ msg }) => !msg.author.bot),
+      TO.filter(({ client, msg }) => !R.equals(msg.author.id, client.user.id)),
+      TO.filter(({ msg }) => !excludeChannels.hasChannel(msg.channelId)),
+      TO.chain(recordCreatedMsg)
+    )();
+  };
 }
-
-const messageCreateListener: MessageCreateListener = (client) => (msg) => {
-  pipe(
-    TO.some({ client, msg }),
-    TO.chainFirst(
-      flow(
-        R.prop('msg'),
-        checkBannedUser,
-        TO.match(
-          () => O.some(0),
-          () => O.none
-        )
-      )
-    ),
-    TO.chainFirst(
-      flow(
-        R.prop('msg'),
-        inviteLinkGuard,
-        TO.match(
-          () => O.some(0),
-          () => O.none
-        )
-      )
-    ),
-    TO.filter(({ msg }) => !msg.author.bot),
-    TO.filter(({ client, msg }) => !R.equals(msg.author.id, client.user.id)),
-    TO.filter(({ msg }) => !excludeChannels.hasChannel(msg.channelId)),
-    TO.chain(recordCreatedMsg)
-  )();
-};
 
 export default messageCreateListener;

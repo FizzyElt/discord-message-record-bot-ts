@@ -13,11 +13,11 @@ const guildId = process.env.GUILD_ID || '';
 
 const rest = new REST({ version: '10' }).setToken(token);
 
-const pushCommands = (params: {
+function pushCommands(params: {
   clientId: string;
   guildId: string;
   commands: Array<Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>>;
-}) => {
+}) {
   return TE.tryCatch(
     () =>
       rest.put(Routes.applicationGuildCommands(params.clientId, params.guildId), {
@@ -25,7 +25,7 @@ const pushCommands = (params: {
       }),
     (err) => err
   );
-};
+}
 
 pipe(
   pushCommands({ clientId, guildId, commands }),

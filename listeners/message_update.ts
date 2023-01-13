@@ -5,21 +5,19 @@ import * as TO from 'fp-ts/TaskOption';
 import excludeChannels from '../store/exclude_channels';
 import recordUpdatedMsg from '../tasks/record_updated_msg';
 
-interface MessageUpdateListener {
-  (client: Client<true>): (
+function messageUpdateListener(client: Client<true>) {
+  return (
     oldMsg: Message<boolean> | PartialMessage,
     newMsg: Message<boolean> | PartialMessage
-  ) => Awaitable<void>;
+  ): Awaitable<void> => {
+    pipe(
+      O.some({ client, newMsg, oldMsg }),
+      O.filter((params) => !params.newMsg.author?.bot),
+      O.filter((params) => !excludeChannels.hasChannel(params.newMsg.channelId)),
+      TO.fromOption,
+      TO.chain(recordUpdatedMsg)
+    )();
+  };
 }
-
-const messageUpdateListener: MessageUpdateListener = (client) => (oldMsg, newMsg) => {
-  pipe(
-    O.some({ client, newMsg, oldMsg }),
-    O.filter((params) => !params.newMsg.author?.bot),
-    O.filter((params) => !excludeChannels.hasChannel(params.newMsg.channelId)),
-    TO.fromOption,
-    TO.chain(recordUpdatedMsg)
-  )();
-};
 
 export default messageUpdateListener;
