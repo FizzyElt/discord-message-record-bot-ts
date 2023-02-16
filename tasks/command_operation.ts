@@ -80,7 +80,7 @@ function addChannels(client: Client<true>) {
             ],
             [R.T, () => notSupportChannelType],
           ]),
-          IO.map(O.some)
+          IOOption.fromIO
         )
       ),
       IOOption.getOrElse(() => notFoundChannel)
@@ -132,7 +132,7 @@ function removeChannels(client: Client<true>) {
             ],
             [R.T, () => notSupportChannelType],
           ]),
-          IO.map(O.some)
+          IOOption.fromIO
         )
       ),
       IOOption.getOrElse(() => notFoundChannel)
