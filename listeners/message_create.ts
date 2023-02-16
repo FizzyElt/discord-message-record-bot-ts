@@ -34,7 +34,7 @@ function messageCreateListener(client: Client<true>) {
       ),
       TO.filter(({ msg }) => !msg.author.bot),
       TO.filter(({ client, msg }) => !R.equals(msg.author.id, client.user.id)),
-      TO.filter(({ msg }) => !excludeChannels.hasChannel(msg.channelId)),
+      TO.filter(({ msg }) => !excludeChannels.hasChannel(msg.channelId)()),
       TO.chain(recordCreatedMsg)
     )();
   };

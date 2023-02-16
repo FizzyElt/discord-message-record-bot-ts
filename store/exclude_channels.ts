@@ -1,4 +1,7 @@
 import * as R from 'ramda';
+import * as IORef from 'fp-ts/IORef';
+import * as IO from 'fp-ts/IO';
+import { pipe, flow } from 'fp-ts/function';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -8,52 +11,57 @@ const sendedChannel = {
   name: process.env.BOT_SENDING_CHANNEL_NAME as string,
 };
 
-const excludeChannels = new Map<string, string>([[sendedChannel.id, sendedChannel.name]]);
+// const excludeChannels = new Map<string, string>([[sendedChannel.id, sendedChannel.name]]);
 
-interface HasChannel {
-  (id: string): boolean;
-}
+const excludeChannelsRef = IORef.newIORef(
+  new Map<string, string>([[sendedChannel.id, sendedChannel.name]])
+);
 
-const hasChannel: HasChannel = (id) => excludeChannels.has(id);
+const hasChannel = (id: string) =>
+  pipe(
+    getChannelMap(),
+    IO.map((map) => map.has(id))
+  );
 
-interface GetChannelMap {
-  (): Map<string, string>;
-}
+const getChannelMap = () =>
+  pipe(
+    excludeChannelsRef,
+    IO.map((ref) => ref.read())
+  );
 
-const getChannelMap: GetChannelMap = () => excludeChannels;
+const addChannel = ({ id, name = '' }: { id: string; name: string }) =>
+  pipe(
+    excludeChannelsRef,
+    IO.chainFirst((ref) => ref.modify((map) => map.set(id, name))),
+    IO.map((ref) => ref.read())
+  );
 
-interface AddChannel {
-  (params: { id: string; name: string }): Map<string, string>;
-}
+const addChannels = (list: Array<{ id: string; name: string }> = []) =>
+  pipe(
+    excludeChannelsRef,
+    IO.chain((ref) => ref.modify((map) => (list.forEach(({ id, name }) => map.set(id, name)), map)))
+  );
 
-const addChannel: AddChannel = ({ id, name = '' }) => excludeChannels.set(id, name);
+const removeChannel = (id: string) =>
+  pipe(
+    excludeChannelsRef,
+    IO.map((ref) => {
+      if (R.equals(id, sendedChannel.id)) return false;
 
-interface AddChannels {
-  (list: Array<{ id: string; name: string }>): void;
-}
+      const map = ref.read();
+      const res = map.delete(id);
+      ref.write(map);
+      return res;
+    })
+  );
 
-const addChannels: AddChannels = (list = []) =>
-  list.forEach(({ id, name }) => excludeChannels.set(id, name));
-
-interface RemoveChannel {
-  (id: string): boolean;
-}
-
-const removeChannel: RemoveChannel = (id) => {
-  if (R.equals(id, sendedChannel.id)) return false;
-
-  return excludeChannels.delete(id);
-};
-
-interface RemoveChannels {
-  (ids: Array<string>): void;
-}
-
-const removeChannels: RemoveChannels = (ids = []) => {
-  ids.filter(R.equals(sendedChannel.id)).forEach((id) => {
-    excludeChannels.delete(id);
-  });
-};
+const removeChannels = (ids: Array<string> = []) =>
+  pipe(
+    IO.Do,
+    IO.bind('ref', () => excludeChannelsRef),
+    IO.bind('ids', () => IO.of(ids.filter(flow(R.equals(sendedChannel.id), R.not)))),
+    IO.map(({ ref, ids }) => ref.modify((map) => (ids.forEach((id) => map.delete(id)), map)))
+  );
 
 export default {
   hasChannel,

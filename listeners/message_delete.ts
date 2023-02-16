@@ -22,7 +22,7 @@ function messageDeleteListener(client: Client<true>) {
         )
       ),
       TO.filter((params) => !params.msg.author?.bot),
-      TO.filter((params) => !excludeChannels.hasChannel(params.msg.channelId)),
+      TO.filter((params) => !excludeChannels.hasChannel(params.msg.channelId)()),
       TO.chain(recordDeletedMsg)
     )();
   };

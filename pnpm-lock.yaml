@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@discordjs/builders': ^1.4.0
   '@discordjs/rest': ^1.5.0
   '@types/node': ^18.11.18
   '@types/ramda': ^0.28.20
@@ -14,6 +15,7 @@ specifiers:
   typescript: ^4.9.4
 
 dependencies:
+  '@discordjs/builders': 1.4.0
   '@discordjs/rest': 1.5.0
   date-fns: 2.29.3
   discord-api-types: 0.37.33
