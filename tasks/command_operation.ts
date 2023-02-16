@@ -9,7 +9,7 @@ import {
   PermissionFlagsBits,
   CacheType,
 } from 'discord.js';
-import { pipe, flow } from 'fp-ts/function';
+import { pipe, flow, constant } from 'fp-ts/function';
 import { fromCompare } from 'fp-ts/Ord';
 import * as O from 'fp-ts/Option';
 import * as T from 'fp-ts/Task';
@@ -78,12 +78,12 @@ function addChannels(client: Client<true>) {
                   IO.map((channel) => `已排除 **${channel.name}**`)
                 ),
             ],
-            [R.T, () => notSupportChannelType],
+            [R.T, constant(notSupportChannelType)],
           ]),
           IOOption.fromIO
         )
       ),
-      IOOption.getOrElse(() => notFoundChannel)
+      IOOption.getOrElse(constant(notFoundChannel))
     );
 }
 
@@ -130,12 +130,12 @@ function removeChannels(client: Client<true>) {
                   IO.map((channel) => `已監聽 **${channel.name}**`)
                 ),
             ],
-            [R.T, () => notSupportChannelType],
+            [R.T, constant(notSupportChannelType)],
           ]),
           IOOption.fromIO
         )
       ),
-      IOOption.getOrElse(() => notFoundChannel)
+      IOOption.getOrElse(constant(notFoundChannel))
     );
 }
 
@@ -169,7 +169,7 @@ function banUser(client: Client<true>) {
           IOOption.map((user) => `${user.username} 禁言 ${mins} 分鐘`)
         );
       }),
-      IOOption.getOrElse(() => R.always('找不到使用者'))
+      IOOption.getOrElse(constant(IO.of('找不到使用者')))
     );
 }
 
@@ -196,7 +196,7 @@ function unbanUser(client: Client<true>) {
           )
         )
       ),
-      IOOption.getOrElse(() => R.always('找不到使用者'))
+      IOOption.getOrElse(constant(IO.of('找不到使用者')))
     );
 }
 
@@ -210,7 +210,7 @@ function getOperationByCommand(
     [eqCommandName(CommandName.channel_list), listChannels],
     [eqCommandName(CommandName.ban_user), banUser(client)],
     [eqCommandName(CommandName.unban_user), unbanUser(client)],
-    [R.T, () => R.always('不支援的指令')],
+    [R.T, constant(IO.of('不支援的指令'))],
   ]);
 }
 
