@@ -56,7 +56,7 @@ function addChannels(client: Client<true>) {
           )
         )
       ),
-      IOOption.fromOption,
+      IO.of,
       IOOption.chain(
         flow(
           R.cond<[Channel], IO.IO<string>>([
@@ -100,7 +100,7 @@ function removeChannels(client: Client<true>) {
           )
         )
       ),
-      IOOption.fromOption,
+      IO.of,
       IOOption.chain(
         flow(
           R.cond<[Channel], IO.IO<string>>([
@@ -157,19 +157,19 @@ function banUser(client: Client<true>) {
   return (interaction: CommandInteraction) =>
     pipe(
       isAdmin(interaction) ? O.none : O.some('不是管理員還敢 ban 人阿'),
-      O.alt(() => {
+      IO.of,
+      IOOption.alt(() => {
         const userId = getCommandOptionString('user_id')(interaction);
         const mins = getCommandOptionInt('time')(interaction);
 
         return pipe(
           client.users.cache.find(R.propEq('id', userId)),
-          O.fromNullable,
-          O.map(R.tap((user) => user_black_list.addUser(user.id, mins))),
-          O.map((user) => `${user.username} 禁言 ${mins} 分鐘`)
+          IOOption.fromNullable,
+          IOOption.chainFirst((user) => IOOption.fromIO(user_black_list.addUser(user.id, mins))),
+          IOOption.map((user) => `${user.username} 禁言 ${mins} 分鐘`)
         );
       }),
-      O.getOrElse(R.always('找不到使用者')),
-      IO.of
+      IOOption.getOrElse(() => R.always('找不到使用者'))
     );
 }
 
@@ -177,18 +177,26 @@ function unbanUser(client: Client<true>) {
   return (interaction: CommandInteraction) =>
     pipe(
       isAdmin(interaction) ? O.none : O.some('你不是管理員，你沒有權限解 ban'),
-      O.alt(() =>
+      IO.of,
+      IOOption.alt(() =>
         pipe(
           getCommandOptionString('user_id')(interaction),
           (userId) => client.users.cache.find(R.propEq('id', userId)),
-          O.fromNullable,
-          O.map((user) =>
-            user_black_list.removeUser(user.id) ? `${user.username} 重穫自由` : '此人沒有被禁言'
+          IOOption.fromNullable,
+          IOOption.chain((user) =>
+            pipe(
+              IO.Do,
+              IO.bind('user', () => IO.of(user)),
+              IO.bind('isReleased', ({ user }) => user_black_list.removeUser(user.id)),
+              IO.map(({ user, isReleased }) =>
+                isReleased ? `${user.username} 重穫自由` : '此人沒有被禁言'
+              ),
+              IOOption.fromIO
+            )
           )
         )
       ),
-      O.getOrElse(R.always('找不到使用者')),
-      IO.of
+      IOOption.getOrElse(() => R.always('找不到使用者'))
     );
 }
 
