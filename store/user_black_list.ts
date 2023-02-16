@@ -26,10 +26,6 @@ const hasUser = (id: string) =>
 const getBanedUser = (id: string) =>
   pipe(getUserBannedMap(), IO.map(flow((map) => map.get(id), O.fromNullable, O.map(parseISO))));
 
-interface AddUser {
-  (id: string, time: number): Map<string, string>;
-}
-
 const addUser = R.curry((id: string, time: number = 0) =>
   pipe(
     userBlackList,

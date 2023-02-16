@@ -29,10 +29,6 @@ const getChannelMap = () =>
     IO.map((ref) => ref.read())
   );
 
-interface AddChannel {
-  (params: { id: string; name: string }): Map<string, string>;
-}
-
 const addChannel = ({ id, name = '' }: { id: string; name: string }) =>
   pipe(
     excludeChannelsRef,
@@ -45,10 +41,6 @@ const addChannels = (list: Array<{ id: string; name: string }> = []) =>
     excludeChannelsRef,
     IO.chain((ref) => ref.modify((map) => (list.forEach(({ id, name }) => map.set(id, name)), map)))
   );
-
-interface RemoveChannel {
-  (id: string): boolean;
-}
 
 const removeChannel = (id: string) =>
   pipe(

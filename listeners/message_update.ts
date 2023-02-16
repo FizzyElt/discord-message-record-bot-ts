@@ -13,7 +13,7 @@ function messageUpdateListener(client: Client<true>) {
     pipe(
       O.some({ client, newMsg, oldMsg }),
       O.filter((params) => !params.newMsg.author?.bot),
-      O.filter((params) => !excludeChannels.hasChannel(params.newMsg.channelId)),
+      O.filter((params) => !excludeChannels.hasChannel(params.newMsg.channelId)()),
       TO.fromOption,
       TO.chain(recordUpdatedMsg)
     )();
