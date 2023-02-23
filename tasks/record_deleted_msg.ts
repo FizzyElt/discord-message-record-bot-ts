@@ -4,6 +4,8 @@ import { flow } from 'fp-ts/function';
 import * as R from 'ramda';
 import { format } from 'date-fns';
 
+import { getChannelByClient } from '../utils/channel';
+
 function getDeletedMsgString(msg: Message<boolean> | PartialMessage) {
   const channelName = msg.channel.isTextBased()
     ? (msg.channel as GuildTextBasedChannel).name
@@ -28,7 +30,7 @@ interface RecordDeleteMsg {
 const recordDeleteMsg: RecordDeleteMsg = flow(
   TO.some,
   TO.bind('sendChannel', ({ client }) =>
-    TO.fromNullable(client.channels.cache.get(process.env.BOT_SENDING_CHANNEL_ID || ''))
+    TO.fromOption(getChannelByClient(process.env.BOT_SENDING_CHANNEL_ID || '')(client))
   ),
   TO.filter(({ sendChannel }) => sendChannel.isTextBased()),
   TO.bind('sendString', flow(R.prop('msg'), getDeletedMsgString, TO.of)),

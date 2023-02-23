@@ -7,6 +7,8 @@ import {
   messageUpdate,
   messageCreate,
   interactionCreate,
+  guildMemberAdd,
+  guildMemberRemove,
 } from './listeners';
 
 dotenv.config();
@@ -30,5 +32,9 @@ client.on('messageUpdate', messageUpdate(client));
 client.on('messageDelete', messageDelete(client));
 
 client.on('interactionCreate', interactionCreate(client));
+
+client.on('guildMemberAdd', guildMemberAdd(client));
+
+client.on('guildMemberRemove', guildMemberRemove(client));
 
 client.login(process.env.TOKEN);

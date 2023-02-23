@@ -2,6 +2,7 @@ import {
   ApplicationCommandOptionType,
   CategoryChannel,
   ChannelType,
+  Client,
   CommandInteraction,
 } from 'discord.js';
 import { flow, pipe } from 'fp-ts/function';
@@ -39,3 +40,6 @@ export const getCommandOptionInt = (optionName: string) =>
     O.map(R.prop('value')),
     O.getOrElse(R.always(0))
   );
+
+export const getChannelByClient = (id: string) => (client: Client<true>) =>
+  O.fromNullable(client.channels.cache.get(id));
