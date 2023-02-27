@@ -1,4 +1,10 @@
-import type { Client, CommandInteraction } from 'discord.js';
+import type {
+  Client,
+  CommandInteraction,
+  InteractionResponse,
+  Message,
+  CacheType,
+} from 'discord.js';
 import { pipe } from 'fp-ts/function';
 import * as TO from 'fp-ts/TaskOption';
 import * as R from 'ramda';
@@ -12,7 +18,10 @@ import unbanUser from './unban_user';
 
 function getOperationByCommand(client: Client<true>) {
   const eqCommandName = R.propEq('commandName');
-  return R.cond([
+  return R.cond<
+    [CommandInteraction],
+    TO.TaskOption<InteractionResponse<boolean> | Message<boolean>>
+  >([
     [eqCommandName(CommandName.add_channels), addChannels(client)],
     [eqCommandName(CommandName.remove_channels), removeChannels(client)],
     [eqCommandName(CommandName.channel_list), listChannels],
