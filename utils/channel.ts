@@ -4,6 +4,7 @@ import {
   ChannelType,
   Client,
   CommandInteraction,
+  TextChannel,
 } from 'discord.js';
 import { flow, pipe } from 'fp-ts/function';
 import * as O from 'fp-ts/Option';
@@ -43,3 +44,13 @@ export const getCommandOptionInt = (optionName: string) =>
 
 export const getChannelByClient = (id: string) => (client: Client<true>) =>
   O.fromNullable(client.channels.cache.get(id));
+
+export const getTextChannelsInfo = flow<
+  [CategoryChannel],
+  Array<{ id: string; name: string }>,
+  Array<{ id: string; name: string }>
+>(getCategoryTextChannels, R.map(pickChannelIdAndName));
+
+export const getTextChannelInfo = flow<[TextChannel], { id: string; name: string }>(
+  pickChannelIdAndName
+);

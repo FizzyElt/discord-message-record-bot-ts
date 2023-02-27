@@ -1,5 +1,5 @@
 import { Message, PartialMessage } from 'discord.js';
-import * as TO from 'fp-ts/TaskOption';
+import * as TaskOption from 'fp-ts/TaskOption';
 import { flow } from 'fp-ts/function';
 import * as R from 'ramda';
 
@@ -11,13 +11,15 @@ function isDiscordInviteString(str: string) {
 
 const inviteLinkGuard = flow<
   [Message<boolean> | PartialMessage],
-  TO.TaskOption<Message<boolean> | PartialMessage>,
-  TO.TaskOption<Message<boolean> | PartialMessage>,
-  TO.TaskOption<Message<boolean> | PartialMessage>
+  TaskOption.TaskOption<Message<boolean> | PartialMessage>,
+  TaskOption.TaskOption<Message<boolean> | PartialMessage>,
+  TaskOption.TaskOption<Message<boolean> | PartialMessage>
 >(
-  TO.of,
-  TO.filter((msg) => R.is(String, msg.content) && isDiscordInviteString(msg.content)),
-  TO.chain(R.ifElse(R.prop('deletable'), (msg) => TO.tryCatch(() => msg.delete()), TO.of))
+  TaskOption.of,
+  TaskOption.filter((msg) => R.is(String, msg.content) && isDiscordInviteString(msg.content)),
+  TaskOption.chain(
+    R.ifElse(R.prop('deletable'), (msg) => TaskOption.tryCatch(() => msg.delete()), TaskOption.of)
+  )
 );
 
 // R.ifElse(
