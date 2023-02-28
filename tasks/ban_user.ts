@@ -36,7 +36,9 @@ const votingFlow = ({
   pipe(
     TaskOption.tryCatch(() =>
       interaction.reply({
-        content: `是否禁言 **${member.nickname || member.user.username} ${mins}** 分鐘`,
+        content: `是否禁言 **${
+          member.nickname || member.user.username
+        } ${mins}** 分鐘\n*3 分鐘後累積 5 票者禁言*`,
         fetchReply: true,
       })
     ),
