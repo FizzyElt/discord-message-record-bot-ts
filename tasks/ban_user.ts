@@ -5,8 +5,10 @@ import {
   EmojiIdentifierResolvable,
   Message,
   AwaitReactionsOptions,
+  GuildMemberManager,
 } from 'discord.js';
 import * as Option from 'fp-ts/Option';
+import * as Task from 'fp-ts/Task';
 import * as TaskOption from 'fp-ts/TaskOption';
 import { flow, pipe } from 'fp-ts/function';
 
@@ -22,6 +24,17 @@ const reactMsg = (emoji: EmojiIdentifierResolvable) => (msg: Message<boolean>) =
 const awaitReactions = (options?: AwaitReactionsOptions) => (msg: Message<boolean>) =>
   TaskOption.tryCatch(() => msg.awaitReactions(options));
 
+const findUser = (idOrTag: string) => (members: GuildMemberManager) =>
+  pipe(
+    TaskOption.tryCatch(() => members.fetch()),
+    TaskOption.chain((members) =>
+      TaskOption.fromNullable(
+        members.find((member) => member.user.tag.includes(idOrTag) || member.user.id === idOrTag)
+      )
+    ),
+    TaskOption.map((member) => member)
+  );
+
 function banUser(client: Client<true>) {
   return (interaction: CommandInteraction<CacheType>) =>
     pipe(
@@ -29,49 +42,58 @@ function banUser(client: Client<true>) {
         userId: getCommandOptionString('user_id')(interaction),
         mins: getCommandOptionInt('time')(interaction),
       }),
-      Option.bind('user', ({ userId }) =>
-        Option.fromNullable(client.users.cache.find(R.propEq('id', userId)))
+      Task.of,
+      TaskOption.bind('member', ({ userId }) =>
+        interaction.guild?.members ? findUser(userId)(interaction.guild.members) : TaskOption.none
       ),
-      Option.match(
-        () =>
-          TaskOption.tryCatch(() =>
-            interaction.reply({ content: '找不到使用者', fetchReply: true })
-          ),
-        flow(
-          TaskOption.of,
-          TaskOption.bind('replyMsg', ({ user, mins }) =>
-            pipe(
-              TaskOption.tryCatch(() =>
-                interaction.reply({
-                  content: `是否禁言 ${user.username} ${mins} 分鐘`,
-                  fetchReply: true,
+      Task.chain(
+        Option.match(
+          () =>
+            TaskOption.tryCatch(() =>
+              interaction.reply({ content: '找不到使用者', fetchReply: true })
+            ),
+          flow(
+            TaskOption.of,
+            TaskOption.bind('replyMsg', ({ member, mins }) =>
+              pipe(
+                TaskOption.tryCatch(() =>
+                  interaction.reply({
+                    content: `是否禁言 **${member.nickname || member.user.username} ${mins}** 分鐘`,
+                    fetchReply: true,
+                  })
+                ),
+                TaskOption.chainFirst(reactMsg('✅'))
+              )
+            ),
+            TaskOption.bind(
+              'collected',
+              flow(
+                R.prop('replyMsg'),
+                awaitReactions({
+                  filter: (reaction, user) => reaction.emoji.name === '✅' && !user.bot,
+                  time: 30_000,
                 })
-              ),
-              TaskOption.chainFirst(reactMsg('✅'))
-            )
-          ),
-          TaskOption.bind(
-            'collected',
-            flow(
-              R.prop('replyMsg'),
-              awaitReactions({
-                filter: (reaction, user) => reaction.emoji.name === '✅' && !user.bot,
-                time: 30_000,
-              })
-            )
-          ),
-          TaskOption.chainFirst(({ collected, replyMsg, user, mins }) => {
-            if (collected.size >= 5)
-              return pipe(
-                TaskOption.tryCatch(() => replyMsg.reply(`${user.username} 禁言 ${mins} 分鐘`)),
-                TaskOption.chainFirst(() =>
-                  TaskOption.fromIO(user_black_list.addUser(user.id, mins))
-                )
-              );
+              )
+            ),
+            TaskOption.chainFirst(({ collected, replyMsg, member, mins }) => {
+              if (collected.size >= 5)
+                return pipe(
+                  TaskOption.tryCatch(() =>
+                    replyMsg.reply(
+                      `**${member.nickname || member.user.username}** 禁言 ${mins} 分鐘`
+                    )
+                  ),
+                  TaskOption.chainFirst(() =>
+                    TaskOption.fromIO(user_black_list.addUser(member.id, mins))
+                  )
+                );
 
-            return TaskOption.tryCatch(() => replyMsg.reply(`${user.username} 逃過一劫`));
-          }),
-          TaskOption.map(R.prop('replyMsg'))
+              return TaskOption.tryCatch(() =>
+                replyMsg.reply(`**${member.nickname || member.user.username}** 逃過一劫`)
+              );
+            }),
+            TaskOption.map(R.prop('replyMsg'))
+          )
         )
       )
     );
