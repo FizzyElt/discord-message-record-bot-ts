@@ -10,10 +10,7 @@ const findUserByMembers = (idOrMention: string) => (members: GuildMemberManager)
       (str) =>
         pipe(
           MessageMentions.UsersPattern.exec(str),
-          (resolve) => {
-            console.log(resolve);
-            return resolve?.at(1) || '';
-          },
+          (resolve) => resolve?.at(1) || '',
           (id) => TaskOption.tryCatch(() => members.fetch(id))
         ),
     ],

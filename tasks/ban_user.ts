@@ -74,16 +74,15 @@ function banUser(client: Client<true>) {
   return (interaction: CommandInteraction<CacheType>) =>
     pipe(
       Option.of({
-        userId: getCommandOptionString('user_id')(interaction),
+        userId: getCommandOptionString('mention_user')(interaction),
         mins: getCommandOptionInt('time')(interaction),
       }),
       Task.of,
-      TaskOption.bind('member', ({ userId }) => {
-        console.log(userId);
-        return interaction.guild?.members
+      TaskOption.bind('member', ({ userId }) =>
+        interaction.guild?.members
           ? findUserByMembers(userId)(interaction.guild.members)
-          : TaskOption.none;
-      }),
+          : TaskOption.none
+      ),
       Task.chain(
         Option.match(
           () =>
