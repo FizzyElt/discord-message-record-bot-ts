@@ -51,11 +51,12 @@ const votingFlow = ({
       })(replyMsg)
     ),
     TaskOption.chainFirst(({ collected, replyMsg }) => {
-      if (collected.size >= 5) {
+      const count = collected.get('✅')?.count || 0;
+      if (count >= 5) {
         return pipe(
           TaskOption.tryCatch(() =>
             replyMsg.reply(
-              `恭喜獲得 **${collected.size}** 票 **${
+              `恭喜獲得 **${count}** 票 **${
                 member.nickname || member.user.username
               }** 禁言 ${mins} 分鐘`
             )
@@ -64,9 +65,7 @@ const votingFlow = ({
         );
       }
       return TaskOption.tryCatch(() =>
-        replyMsg.reply(
-          `**${collected.size}** 票，**${member.nickname || member.user.username}** 逃過一劫`
-        )
+        replyMsg.reply(`**${count}** 票，**${member.nickname || member.user.username}** 逃過一劫`)
       );
     }),
     TaskOption.map(R.prop('replyMsg'))
