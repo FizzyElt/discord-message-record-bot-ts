@@ -27,7 +27,6 @@ export enum CommandName {
   remove_channels = 'remove_channels',
   channel_list = 'channel_list',
   ban_user = 'ban_user',
-  unban_user = 'unban_user',
 }
 
 export const commands = [
@@ -62,8 +61,8 @@ export const commands = [
     .setDescription('ban user')
     .addStringOption(
       new SlashCommandStringOption()
-        .setName('user_id')
-        .setDescription('user id')
+        .setName('mention_user')
+        .setDescription('mention user')
         .setMaxLength(150)
         .setRequired(true)
     )
@@ -72,17 +71,6 @@ export const commands = [
         .setName('time')
         .setDescription('time(mins)')
         .setChoices(...minsChoices.map(([name, value]) => createNumberChoice(name, value)))
-        .setRequired(true)
-    ),
-
-  new SlashCommandBuilder()
-    .setName(CommandName.unban_user)
-    .setDescription('unban user')
-    .addStringOption(
-      new SlashCommandStringOption()
-        .setName('user_id')
-        .setDescription('user id')
-        .setMaxLength(150)
         .setRequired(true)
     ),
 ];
