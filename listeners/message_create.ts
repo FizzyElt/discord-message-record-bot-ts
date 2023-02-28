@@ -5,23 +5,12 @@ import * as TO from 'fp-ts/TaskOption';
 import * as R from 'ramda';
 import excludeChannels from '../store/exclude_channels';
 import recordCreatedMsg from '../tasks/record_created_msg';
-import checkBannedUser from '../tasks/check_banned_user';
 import inviteLinkGuard from '../tasks/invite_link_guard';
 
 function messageCreateListener(client: Client<true>) {
   return (msg: Message<boolean>): Awaitable<void> => {
     pipe(
       TO.some({ client, msg }),
-      TO.chainFirst(
-        flow(
-          R.prop('msg'),
-          checkBannedUser,
-          TO.match(
-            () => O.some(0),
-            () => O.none
-          )
-        )
-      ),
       TO.chainFirst(
         flow(
           R.prop('msg'),
