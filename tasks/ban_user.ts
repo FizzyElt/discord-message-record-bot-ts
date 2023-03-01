@@ -47,11 +47,17 @@ const votingFlow = ({
     TaskOption.bind('collected', ({ replyMsg }) =>
       awaitReactions({
         filter: (reaction, user) => reaction.emoji.name === '✅' && !user.bot,
-        time: 3 * 60 * 1000,
+        time: 5 * 1000,
       })(replyMsg)
     ),
     TaskOption.chainFirst(({ collected, replyMsg }) => {
-      const count = collected.get('✅')?.count || 0;
+      const count = pipe(
+        Option.fromNullable(collected.get('✅')?.count),
+        Option.filter(R.gt(R.__, 0)),
+        Option.map(R.dec),
+        Option.getOrElse(() => 0)
+      );
+
       if (count >= 5) {
         return pipe(
           TaskOption.tryCatch(() =>
@@ -64,6 +70,7 @@ const votingFlow = ({
           TaskOption.chainFirst(() => TaskOption.tryCatch(() => member.timeout(mins * 60 * 1000)))
         );
       }
+
       return TaskOption.tryCatch(() =>
         replyMsg.reply(`**${count}** 票，**${member.nickname || member.user.username}** 逃過一劫`)
       );
