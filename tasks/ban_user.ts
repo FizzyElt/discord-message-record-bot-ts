@@ -47,7 +47,7 @@ const votingFlow = ({
     TaskOption.bind('collected', ({ replyMsg }) =>
       awaitReactions({
         filter: (reaction, user) => reaction.emoji.name === '✅' && !user.bot,
-        time: 5 * 1000,
+        time: 3 * 60 * 1000,
       })(replyMsg)
     ),
     TaskOption.chainFirst(({ collected, replyMsg }) => {
