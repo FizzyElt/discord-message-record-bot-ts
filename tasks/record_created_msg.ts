@@ -1,5 +1,5 @@
 import { Client, Message, PartialMessage, GuildTextBasedChannel } from 'discord.js';
-import * as TO from 'fp-ts/TaskOption';
+import * as TaskOption from 'fp-ts/TaskOption';
 import * as R from 'ramda';
 import { flow } from 'fp-ts/function';
 import { format } from 'date-fns';
@@ -20,27 +20,27 @@ function getCreatedMsgString(msg: Message<boolean> | PartialMessage) {
 }
 
 interface RecordCreateMsg {
-  (params: { client: Client<true>; msg: Message<boolean> | PartialMessage }): TO.TaskOption<
+  (params: { client: Client<true>; msg: Message<boolean> | PartialMessage }): TaskOption.TaskOption<
     Message<true>
   >;
 }
 
 const recordCreateMsg: RecordCreateMsg = flow(
-  TO.some,
-  TO.bind('sendChannel', ({ client }) =>
-    TO.fromOption(getChannelByClient(process.env.BOT_SENDING_CHANNEL_ID || '')(client))
+  TaskOption.some,
+  TaskOption.bind('sendChannel', ({ client }) =>
+    TaskOption.fromOption(getChannelByClient(process.env.BOT_SENDING_CHANNEL_ID || '')(client))
   ),
-  TO.filter(({ sendChannel }) => sendChannel.isTextBased()),
-  TO.bind('sendString', flow(R.prop('msg'), getCreatedMsgString, TO.of)),
-  TO.bind('sentMsg', ({ sendChannel, sendString }) =>
-    TO.tryCatch(() =>
+  TaskOption.filter(({ sendChannel }) => sendChannel.isTextBased()),
+  TaskOption.bind('sendString', flow(R.prop('msg'), getCreatedMsgString, TaskOption.of)),
+  TaskOption.bind('sentMsg', ({ sendChannel, sendString }) =>
+    TaskOption.tryCatch(() =>
       (sendChannel as GuildTextBasedChannel).send({
         content: sendString,
         allowedMentions: { parse: [] },
       })
     )
   ),
-  TO.map(
+  TaskOption.map(
     R.tap(({ sentMsg, msg }) => {
       msg.reference = {
         channelId: sentMsg.channelId,
@@ -49,7 +49,7 @@ const recordCreateMsg: RecordCreateMsg = flow(
       };
     })
   ),
-  TO.map(R.prop('sentMsg'))
+  TaskOption.map(R.prop('sentMsg'))
 );
 
 export default recordCreateMsg;

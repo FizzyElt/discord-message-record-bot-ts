@@ -11,5 +11,13 @@ Implement with functional programming
 
 ## functions
 - [X] record message
-- [X] discord command operations
-- [ ] discord invite link guard
+  - [X] new message
+  - [X] update message
+  - [X] delete message
+- [X] discord slash command operations
+  - [X] add channels
+  - [X] remove channels
+  - [X] list channels
+  - [X] ban user
+  - [X] unban user
+- [X] discord invite link guard

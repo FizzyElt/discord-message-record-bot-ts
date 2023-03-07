@@ -1,216 +1,25 @@
-import {
-  Client,
-  Channel,
-  ChannelType,
-  CategoryChannel,
-  TextChannel,
-  CommandInteraction,
-  InteractionResponse,
-  PermissionFlagsBits,
-  CacheType,
-} from 'discord.js';
-import { pipe, flow, constant } from 'fp-ts/function';
-import { fromCompare } from 'fp-ts/Ord';
-import * as O from 'fp-ts/Option';
-import * as T from 'fp-ts/Task';
+import type { Client, CommandInteraction, InteractionResponse, Message } from 'discord.js';
+import { pipe } from 'fp-ts/function';
 import * as TO from 'fp-ts/TaskOption';
-import * as Map from 'fp-ts/Map';
-import * as IO from 'fp-ts/IO';
-import * as IOOption from 'fp-ts/IOOption';
 import * as R from 'ramda';
-import exclude_channels from '../store/exclude_channels';
-import user_black_list from '../store/user_black_list';
-import {
-  getCategoryTextChannels,
-  getCommandOptionString,
-  getCommandOptionInt,
-  pickChannelIdAndName,
-} from '../utils/channel';
 import { CommandName } from '../slash_command/command';
 
-function isAdmin(interaction: CommandInteraction) {
-  return interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || false;
-}
+import addChannels from './add_channels';
+import removeChannels from './remove_channels';
+import listChannels from './list_channels';
+import banUser from './ban_user';
 
-const notSupportChannelType = R.always('不支援的頻道類型');
-const notFoundChannel = R.always('找不到頻道');
-
-const getTextChannelsInfo = flow<
-  [CategoryChannel],
-  Array<{ id: string; name: string }>,
-  Array<{ id: string; name: string }>
->(getCategoryTextChannels, R.map(pickChannelIdAndName));
-
-const getTextChannelInfo = flow<[TextChannel], { id: string; name: string }>(pickChannelIdAndName);
-
-function addChannels(client: Client<true>) {
-  return (interaction: CommandInteraction) =>
-    pipe(
-      O.some(interaction),
-      O.map(getCommandOptionString('id')),
-      O.chain((idOrName) =>
-        O.fromNullable(
-          client.channels.cache.find(
-            // @ts-ignore types/ramda not defined "whereAny"
-            R.whereAny({ id: R.equals(idOrName), name: R.equals(idOrName) })
-          )
-        )
-      ),
-      IO.of,
-      IOOption.chain(
-        flow(
-          R.cond<[Channel], IO.IO<string>>([
-            [
-              R.propEq('type', ChannelType.GuildCategory),
-              (channel) =>
-                pipe(
-                  IO.of(channel as CategoryChannel),
-                  IO.chainFirst(flow(getTextChannelsInfo, exclude_channels.addChannels)),
-                  IO.map((channel) => `已排除 **${channel.name}** 下的所有文字頻道`)
-                ),
-            ],
-            [
-              R.propEq('type', ChannelType.GuildText),
-              (channel) =>
-                pipe(
-                  IO.of(channel as TextChannel),
-                  IO.chainFirst(flow(getTextChannelInfo, exclude_channels.addChannel)),
-                  IO.map((channel) => `已排除 **${channel.name}**`)
-                ),
-            ],
-            [R.T, constant(notSupportChannelType)],
-          ]),
-          IOOption.fromIO
-        )
-      ),
-      IOOption.getOrElse(constant(notFoundChannel))
-    );
-}
-
-function removeChannels(client: Client<true>) {
-  return (interaction: CommandInteraction) =>
-    pipe(
-      O.some(interaction),
-      O.map(getCommandOptionString('id')),
-      O.chain((idOrName) =>
-        O.fromNullable(
-          client.channels.cache.find(
-            // @ts-ignore types/ramda not defined "whereAny"
-            R.whereAny({ id: R.equals(idOrName), name: R.equals(idOrName) })
-          )
-        )
-      ),
-      IO.of,
-      IOOption.chain(
-        flow(
-          R.cond<[Channel], IO.IO<string>>([
-            [
-              R.propEq('type', ChannelType.GuildCategory),
-              (channel) =>
-                pipe(
-                  IO.of(channel as CategoryChannel),
-                  IO.chainFirst(
-                    flow(
-                      getCategoryTextChannels,
-                      R.map(R.prop('id')),
-                      exclude_channels.removeChannels
-                    )
-                  ),
-                  IO.map((channel) => `已監聽 **${channel.name}** 下的所有文字頻道`)
-                ),
-            ],
-            [
-              R.propEq('type', ChannelType.GuildText),
-              (channel) =>
-                pipe(
-                  IO.of(channel as TextChannel),
-                  IO.chainFirst(
-                    flow(getTextChannelInfo, R.prop('id'), exclude_channels.removeChannel)
-                  ),
-                  IO.map((channel) => `已監聽 **${channel.name}**`)
-                ),
-            ],
-            [R.T, constant(notSupportChannelType)],
-          ]),
-          IOOption.fromIO
-        )
-      ),
-      IOOption.getOrElse(constant(notFoundChannel))
-    );
-}
-
-function listChannels() {
-  return pipe(
-    exclude_channels.getChannelMap(),
-    IO.map(
-      flow(
-        Map.toArray(fromCompare(R.always(0))),
-        R.map(([id, name]) => `(${id}) ${name}`),
-        R.join('\n'),
-        (names) => `目前排除的頻道有：\n${names}`
-      )
-    )
-  );
-}
-
-function banUser(client: Client<true>) {
-  return (interaction: CommandInteraction) =>
-    pipe(
-      isAdmin(interaction) ? O.none : O.some('不是管理員還敢 ban 人阿'),
-      IO.of,
-      IOOption.alt(() => {
-        const userId = getCommandOptionString('user_id')(interaction);
-        const mins = getCommandOptionInt('time')(interaction);
-
-        return pipe(
-          client.users.cache.find(R.propEq('id', userId)),
-          IOOption.fromNullable,
-          IOOption.chainFirst((user) => IOOption.fromIO(user_black_list.addUser(user.id, mins))),
-          IOOption.map((user) => `${user.username} 禁言 ${mins} 分鐘`)
-        );
-      }),
-      IOOption.getOrElse(constant(IO.of('找不到使用者')))
-    );
-}
-
-function unbanUser(client: Client<true>) {
-  return (interaction: CommandInteraction) =>
-    pipe(
-      isAdmin(interaction) ? O.none : O.some('你不是管理員，你沒有權限解 ban'),
-      IO.of,
-      IOOption.alt(() =>
-        pipe(
-          getCommandOptionString('user_id')(interaction),
-          (userId) => client.users.cache.find(R.propEq('id', userId)),
-          IOOption.fromNullable,
-          IOOption.chain((user) =>
-            pipe(
-              IO.Do,
-              IO.bind('user', () => IO.of(user)),
-              IO.bind('isReleased', ({ user }) => user_black_list.removeUser(user.id)),
-              IO.map(({ user, isReleased }) =>
-                isReleased ? `${user.username} 重穫自由` : '此人沒有被禁言'
-              ),
-              IOOption.fromIO
-            )
-          )
-        )
-      ),
-      IOOption.getOrElse(constant(IO.of('找不到使用者')))
-    );
-}
-
-function getOperationByCommand(
-  client: Client<true>
-): (interaction: CommandInteraction<CacheType>) => IO.IO<string> {
+function getOperationByCommand(client: Client<true>) {
   const eqCommandName = R.propEq('commandName');
-  return R.cond([
+  return R.cond<
+    [CommandInteraction],
+    TO.TaskOption<InteractionResponse<boolean> | Message<boolean>>
+  >([
     [eqCommandName(CommandName.add_channels), addChannels(client)],
     [eqCommandName(CommandName.remove_channels), removeChannels(client)],
     [eqCommandName(CommandName.channel_list), listChannels],
     [eqCommandName(CommandName.ban_user), banUser(client)],
-    [eqCommandName(CommandName.unban_user), unbanUser(client)],
-    [R.T, constant(IO.of('不支援的指令'))],
+    [R.T, (interaction) => TO.tryCatch(() => interaction.reply('不支援的指令'))],
   ]);
 }
 
@@ -219,13 +28,6 @@ interface CommandOperationPrams {
   interaction: CommandInteraction;
 }
 
-export function commandOperation(
-  params: CommandOperationPrams
-): TO.TaskOption<InteractionResponse> {
-  return pipe(
-    params.interaction,
-    getOperationByCommand(params.client),
-    T.fromIO,
-    T.chain((replyMsg) => TO.tryCatch(() => params.interaction.reply(replyMsg)))
-  );
+export function commandOperation(params: CommandOperationPrams) {
+  return pipe(params.interaction, getOperationByCommand(params.client));
 }
