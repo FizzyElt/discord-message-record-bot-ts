@@ -14,6 +14,8 @@ import { pipe } from 'fp-ts/function';
 
 import * as R from 'ramda';
 
+import { format } from 'date-fns';
+
 import { getCommandOptionString, getCommandOptionInt } from '../utils/channel';
 import findUserByMembers from '../utils/find_user_by_members';
 import isAdmin from '../utils/isAdmin';
@@ -23,6 +25,28 @@ const reactMsg = (emoji: EmojiIdentifierResolvable) => (msg: Message<boolean>) =
 
 const awaitReactions = (options?: AwaitReactionsOptions) => (msg: Message<boolean>) =>
   TaskOption.tryCatch(() => msg.awaitReactions(options));
+
+const timeoutMember = ({
+  count,
+  timeoutMins,
+  msg,
+  member,
+}: {
+  count: number;
+  timeoutMins: number;
+  msg: Message<boolean>;
+  member: GuildMember;
+}) =>
+  pipe(
+    TaskOption.tryCatch(() =>
+      msg.reply(
+        `恭喜獲得 **${count}** 票 **${
+          member.nickname || member.user.username
+        }** 禁言 ${timeoutMins} 分鐘`
+      )
+    ),
+    TaskOption.apFirst(TaskOption.tryCatch(() => member.timeout(timeoutMins * 60 * 1000)))
+  );
 
 const votingFlow = ({
   member,
@@ -58,18 +82,8 @@ const votingFlow = ({
         Option.getOrElse(() => 0)
       );
 
-      if (count >= 5) {
-        return pipe(
-          TaskOption.tryCatch(() =>
-            replyMsg.reply(
-              `恭喜獲得 **${count}** 票 **${
-                member.nickname || member.user.username
-              }** 禁言 ${mins} 分鐘`
-            )
-          ),
-          TaskOption.chainFirst(() => TaskOption.tryCatch(() => member.timeout(mins * 60 * 1000)))
-        );
-      }
+      if (count >= 5)
+        return timeoutMember({ count: count, msg: replyMsg, timeoutMins: mins, member: member });
 
       return TaskOption.tryCatch(() =>
         replyMsg.reply(`**${count}** 票，**${member.nickname || member.user.username}** 逃過一劫`)
@@ -98,18 +112,30 @@ function banUser(client: Client<true>) {
               interaction.reply({ content: '找不到使用者', fetchReply: true })
             ),
           ({ member, mins }) => {
-            if (isAdmin(member)) {
+            if (isAdmin(member))
               return TaskOption.tryCatch(() =>
                 interaction.reply({ content: '你不可以 ban 管理員', fetchReply: true })
               );
-            }
 
             // is bot self
-            if (R.equals(member.user.id, client.user.id)) {
+            if (R.equals(member.user.id, client.user.id))
               return TaskOption.tryCatch(() =>
                 interaction.reply({ content: '你不可以 ban 我', fetchReply: true })
               );
-            }
+
+            // member is disabled
+            if (member.isCommunicationDisabled())
+              return TaskOption.tryCatch(() =>
+                interaction.reply({
+                  content: `${
+                    member.nickname || member.user.username
+                  } 還在服刑\n出獄時間為 ${format(
+                    member.communicationDisabledUntil,
+                    'yyyy-MM-dd HH:mm'
+                  )}`,
+                  fetchReply: true,
+                })
+              );
 
             return votingFlow({ member, interaction, mins });
           }

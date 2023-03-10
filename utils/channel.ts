@@ -3,6 +3,7 @@ import {
   CategoryChannel,
   ChannelType,
   Client,
+  Channel,
   CommandInteraction,
   TextChannel,
 } from 'discord.js';
@@ -54,3 +55,11 @@ export const getTextChannelsInfo = flow<
 export const getTextChannelInfo = flow<[TextChannel], { id: string; name: string }>(
   pickChannelIdAndName
 );
+
+const eqChannelByType = R.propEq('type');
+
+export const isCategoryChannel = (channel: Channel): channel is CategoryChannel =>
+  eqChannelByType(ChannelType.GuildCategory, channel);
+
+export const isTextChannel = (channel: Channel): channel is TextChannel =>
+  eqChannelByType(ChannelType.GuildText, channel);

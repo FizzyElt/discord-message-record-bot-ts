@@ -1,11 +1,4 @@
-import {
-  Client,
-  Channel,
-  ChannelType,
-  CategoryChannel,
-  TextChannel,
-  CommandInteraction,
-} from 'discord.js';
+import { Client, Channel, CommandInteraction } from 'discord.js';
 import * as Option from 'fp-ts/Option';
 import * as IO from 'fp-ts/IO';
 import * as Task from 'fp-ts/Task';
@@ -14,9 +7,35 @@ import * as IOOption from 'fp-ts/IOOption';
 import { pipe, flow, constant } from 'fp-ts/function';
 import * as R from 'ramda';
 
-import { getCommandOptionString, getTextChannelInfo, getTextChannelsInfo } from '../utils/channel';
+import {
+  getCommandOptionString,
+  getTextChannelInfo,
+  getTextChannelsInfo,
+  isCategoryChannel,
+  isTextChannel,
+} from '../utils/channel';
 
 import exclude_channels from '../store/exclude_channels';
+
+const excludeChannels = (channel: Channel) => {
+  if (isCategoryChannel(channel)) {
+    return pipe(
+      IO.of(channel),
+      IO.chainFirst(flow(getTextChannelsInfo, exclude_channels.addChannels)),
+      IO.map((channel) => `已排除 **${channel.name}** 下的所有文字頻道`)
+    );
+  }
+
+  if (isTextChannel(channel)) {
+    return pipe(
+      IO.of(channel),
+      IO.chainFirst(flow(getTextChannelInfo, exclude_channels.addChannel)),
+      IO.map((channel) => `已排除 **${channel.name}**`)
+    );
+  }
+
+  return IO.of('不支援的頻道類型');
+};
 
 function addChannels(client: Client<true>) {
   return (interaction: CommandInteraction) =>
@@ -32,32 +51,7 @@ function addChannels(client: Client<true>) {
         )
       ),
       IO.of,
-      IOOption.chain(
-        flow(
-          R.cond<[Channel], IO.IO<string>>([
-            [
-              R.propEq('type', ChannelType.GuildCategory),
-              (channel) =>
-                pipe(
-                  IO.of(channel as CategoryChannel),
-                  IO.chainFirst(flow(getTextChannelsInfo, exclude_channels.addChannels)),
-                  IO.map((channel) => `已排除 **${channel.name}** 下的所有文字頻道`)
-                ),
-            ],
-            [
-              R.propEq('type', ChannelType.GuildText),
-              (channel) =>
-                pipe(
-                  IO.of(channel as TextChannel),
-                  IO.chainFirst(flow(getTextChannelInfo, exclude_channels.addChannel)),
-                  IO.map((channel) => `已排除 **${channel.name}**`)
-                ),
-            ],
-            [R.T, constant(IO.of('不支援的頻道類型'))],
-          ]),
-          IOOption.fromIO
-        )
-      ),
+      IOOption.chain(flow(excludeChannels, IOOption.fromIO)),
       IOOption.getOrElse(constant(IO.of('找不到頻道'))),
       Task.fromIO,
       Task.chain((msg) => TaskOption.tryCatch(() => interaction.reply(msg)))
