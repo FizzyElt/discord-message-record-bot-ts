@@ -16,6 +16,7 @@ import * as R from 'ramda';
 
 import { format } from 'date-fns';
 
+import { addNewVoting, removeVoting, isUserVoting } from '../store/voting_store';
 import { getCommandOptionString, getCommandOptionInt } from '../utils/channel';
 import findUserByMembers from '../utils/find_user_by_members';
 import isAdmin from '../utils/isAdmin';
@@ -67,6 +68,7 @@ const votingFlow = ({
       })
     ),
     TaskOption.chainFirst(reactMsg('✅')),
+    TaskOption.chainFirstIOK(() => addNewVoting(member.user.id)),
     TaskOption.bindTo('replyMsg'),
     TaskOption.bind('collected', ({ replyMsg }) =>
       awaitReactions({
@@ -75,6 +77,16 @@ const votingFlow = ({
       })(replyMsg)
     ),
     TaskOption.chainFirst(({ collected, replyMsg }) => {
+      // member is disabled
+      if (member.isCommunicationDisabled())
+        return TaskOption.tryCatch(() =>
+          replyMsg.reply({
+            content: `${member.nickname || member.user.username} 還在服刑\n出獄時間為 ${format(
+              member.communicationDisabledUntil,
+              'yyyy-MM-dd HH:mm'
+            )}`,
+          })
+        );
       const count = pipe(
         Option.fromNullable(collected.get('✅')?.count),
         Option.filter(R.gt(R.__, 0)),
@@ -89,6 +101,7 @@ const votingFlow = ({
         replyMsg.reply(`**${count}** 票，**${member.nickname || member.user.username}** 逃過一劫`)
       );
     }),
+    TaskOption.chainFirstIOK(() => removeVoting(member.user.id)),
     TaskOption.map(R.prop('replyMsg'))
   );
 
@@ -133,6 +146,16 @@ function banUser(client: Client<true>) {
                     member.communicationDisabledUntil,
                     'yyyy-MM-dd HH:mm'
                   )}`,
+                  fetchReply: true,
+                })
+              );
+
+            if (isUserVoting(member.user.id)())
+              return TaskOption.tryCatch(() =>
+                interaction.reply({
+                  content: `${
+                    member.nickname || member.user.username
+                  } 還在審判中\n請等待審判結果後決定是否重新發起投票`,
                   fetchReply: true,
                 })
               );

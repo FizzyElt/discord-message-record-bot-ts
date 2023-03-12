@@ -11,8 +11,6 @@ const sendedChannel = {
   name: process.env.BOT_SENDING_CHANNEL_NAME as string,
 };
 
-// const excludeChannels = new Map<string, string>([[sendedChannel.id, sendedChannel.name]]);
-
 const excludeChannelsRef = IORef.newIORef(
   new Map<string, string>([[sendedChannel.id, sendedChannel.name]])
 );
