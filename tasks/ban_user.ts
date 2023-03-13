@@ -10,6 +10,7 @@ import {
 import * as Option from 'fp-ts/Option';
 import * as Task from 'fp-ts/Task';
 import * as TaskOption from 'fp-ts/TaskOption';
+import * as IORef from 'fp-ts/IORef';
 import { pipe } from 'fp-ts/function';
 
 import * as R from 'ramda';
@@ -53,10 +54,12 @@ const votingFlow = ({
   member,
   interaction,
   mins,
+  votingStoreRef,
 }: {
   member: GuildMember;
   mins: number;
   interaction: CommandInteraction<CacheType>;
+  votingStoreRef: IORef.IORef<Set<string>>;
 }) =>
   pipe(
     TaskOption.tryCatch(() =>
@@ -68,6 +71,7 @@ const votingFlow = ({
       })
     ),
     TaskOption.chainFirst(reactMsg('✅')),
+    TaskOption.chainFirstIOK(() => addNewVoting(member.user.id)(votingStoreRef)),
     TaskOption.bindTo('replyMsg'),
     TaskOption.bind('collected', ({ replyMsg }) =>
       awaitReactions({
@@ -101,10 +105,11 @@ const votingFlow = ({
         replyMsg.reply(`**${count}** 票，**${member.nickname || member.user.username}** 逃過一劫`)
       );
     }),
+    TaskOption.chainFirstIOK(() => removeVoting(member.user.id)(votingStoreRef)),
     TaskOption.map(R.prop('replyMsg'))
   );
 
-function banUser(client: Client<true>) {
+function banUser(client: Client<true>, votingStoreRef: IORef.IORef<Set<string>>) {
   return (interaction: CommandInteraction<CacheType>) =>
     pipe(
       Option.of({
@@ -139,9 +144,9 @@ function banUser(client: Client<true>) {
             if (member.isCommunicationDisabled())
               return TaskOption.tryCatch(() =>
                 interaction.reply({
-                  content: `${
+                  content: `**${
                     member.nickname || member.user.username
-                  } 還在服刑\n出獄時間為 ${format(
+                  }** 還在服刑\n出獄時間為 ${format(
                     member.communicationDisabledUntil,
                     'yyyy-MM-dd HH:mm'
                   )}`,
@@ -149,7 +154,17 @@ function banUser(client: Client<true>) {
                 })
               );
 
-            return votingFlow({ member, interaction, mins });
+            if (isUserVoting(member.user.id)(votingStoreRef)())
+              return TaskOption.tryCatch(() =>
+                interaction.reply({
+                  content: `**${
+                    member.nickname || member.user.username
+                  }** 正在審判中\n請等待審判結束後重新發起投票`,
+                  fetchReply: true,
+                })
+              );
+
+            return votingFlow({ member, interaction, mins, votingStoreRef });
           }
         )
       )

@@ -8,20 +8,22 @@ import * as Map from 'fp-ts/Map';
 import * as R from 'ramda';
 import exclude_channels from '../store/exclude_channels';
 
-function listChannels(interaction: CommandInteraction<CacheType>) {
-  return pipe(
-    exclude_channels.getChannelMap(),
-    IO.map(
-      flow(
-        Map.toArray(fromCompare(R.always(0))),
-        R.map(([id, name]) => `(${id}) ${name}`),
-        R.join('\n'),
-        (names) => `目前排除的頻道有：\n${names}`
-      )
-    ),
-    Task.fromIO,
-    Task.chain((msg) => TaskOption.tryCatch(() => interaction.reply(msg)))
-  );
+import { ChannelStoreRef, readChannelStore } from '../store/new_exclude_channels';
+
+function listChannels(channelStoreRef: ChannelStoreRef) {
+  return (interaction: CommandInteraction<CacheType>) =>
+    pipe(
+      readChannelStore(channelStoreRef),
+      IO.map(
+        flow(
+          Map.collect(fromCompare(R.always(0)))((id, name) => `(${id}) ${name}`),
+          R.join('\n'),
+          (names) => `目前排除的頻道有：\n${names}`
+        )
+      ),
+      Task.fromIO,
+      Task.chain((msg) => TaskOption.tryCatch(() => interaction.reply(msg)))
+    );
 }
 
 export default listChannels;

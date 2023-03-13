@@ -15,13 +15,13 @@ import {
   isTextChannel,
 } from '../utils/channel';
 
-import exclude_channels from '../store/exclude_channels';
+import { ChannelStoreRef, addChannel, addChannels } from '../store/new_exclude_channels';
 
-const excludeChannels = (channel: Channel) => {
+const excludeChannels = (channelStoreRef: ChannelStoreRef) => (channel: Channel) => {
   if (isCategoryChannel(channel)) {
     return pipe(
       IO.of(channel),
-      IO.chainFirst(flow(getTextChannelsInfo, exclude_channels.addChannels)),
+      IO.chainFirst(flow(getTextChannelsInfo, addChannels(channelStoreRef))),
       IO.map((channel) => `已排除 **${channel.name}** 下的所有文字頻道`)
     );
   }
@@ -29,7 +29,7 @@ const excludeChannels = (channel: Channel) => {
   if (isTextChannel(channel)) {
     return pipe(
       IO.of(channel),
-      IO.chainFirst(flow(getTextChannelInfo, exclude_channels.addChannel)),
+      IO.chainFirst(flow(getTextChannelInfo, addChannel(channelStoreRef))),
       IO.map((channel) => `已排除 **${channel.name}**`)
     );
   }
@@ -37,7 +37,7 @@ const excludeChannels = (channel: Channel) => {
   return IO.of('不支援的頻道類型');
 };
 
-function addChannels(client: Client<true>) {
+export default function (client: Client<true>, channelStoreRef: ChannelStoreRef) {
   return (interaction: CommandInteraction) =>
     pipe(
       Option.some(interaction),
@@ -51,11 +51,9 @@ function addChannels(client: Client<true>) {
         )
       ),
       IO.of,
-      IOOption.chain(flow(excludeChannels, IOOption.fromIO)),
+      IOOption.chain(flow(excludeChannels(channelStoreRef), IOOption.fromIO)),
       IOOption.getOrElse(constant(IO.of('找不到頻道'))),
       Task.fromIO,
       Task.chain((msg) => TaskOption.tryCatch(() => interaction.reply(msg)))
     );
 }
-
-export default addChannels;

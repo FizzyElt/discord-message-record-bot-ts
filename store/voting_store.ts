@@ -9,42 +9,23 @@ const userIdExisted = Set.elem(String.Eq);
 const insertUser = Set.insert(String.Eq);
 const removeUser = Set.remove(String.Eq);
 
-const votingStoreRef = IORef.newIORef<Set<string>>(Set.empty);
-
-const getVotingStore = () =>
+const readVotingRef = (ref: IORef.IORef<Set<string>>) =>
   pipe(
-    votingStoreRef,
-    IO.map((ref) => ref.read()),
-    IO.map(R.tap((set) => console.log('read from get', set)))
+    IO.of(ref),
+    IO.map((ref) => ref.read())
   );
 
-const writeVotingStore = (newSet: Set<string>) =>
+export const isUserVoting = (userId: string) => (ref: IORef.IORef<Set<string>>) =>
+  pipe(readVotingRef(ref), IO.map(userIdExisted(userId)));
+
+export const addNewVoting = (userId: string) => (ref: IORef.IORef<Set<string>>) =>
   pipe(
-    votingStoreRef,
-    IO.chain((store) => store.write(newSet))
+    IO.of(ref),
+    IO.chainFirst((ref) => ref.modify(insertUser(userId)))
   );
 
-const modifyVotingStore = (modifyFn: (set: Set<string>) => Set<string>) =>
+export const removeVoting = (userId: string) => (ref: IORef.IORef<Set<string>>) =>
   pipe(
-    votingStoreRef,
-    IO.chainFirst((store) => store.modify(modifyFn))
-  );
-
-export const isUserVoting = (userId: string) =>
-  pipe(
-    getVotingStore(),
-    IO.map(R.tap((set) => console.log('read', set))),
-    IO.map(userIdExisted(userId))
-  );
-
-export const addNewVoting = (userId: string) =>
-  pipe(
-    modifyVotingStore(insertUser(userId)),
-    IO.chainFirst(() => getVotingStore())
-  );
-
-export const removeVoting = (userId: string) =>
-  pipe(
-    modifyVotingStore(removeUser(userId)),
-    IO.chainFirst(() => getVotingStore())
+    IO.of(ref),
+    IO.chainFirst((ref) => ref.modify(removeUser(userId)))
   );

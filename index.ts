@@ -1,6 +1,15 @@
 import { Client, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
 
+import * as IO from 'fp-ts/IO';
+import * as Task from 'fp-ts/Task';
+import * as IORef from 'fp-ts/IORef';
+import * as Set from 'fp-ts/Set';
+import * as Map from 'fp-ts/Map';
+import { pipe } from 'fp-ts/function';
+
+import { ChannelStore } from './store/new_exclude_channels';
+
 import {
   readyListener,
   messageDelete,
@@ -26,18 +35,34 @@ const client = new Client({
   ],
 });
 
-client.on('ready', readyListener);
+pipe(
+  IO.Do,
+  IO.bind('client', () => IO.of(client)),
+  IO.bind('channelStoreRef', () =>
+    IORef.newIORef<ChannelStore>(
+      Map.singleton(
+        process.env.BOT_SENDING_CHANNEL_ID as string,
+        process.env.BOT_SENDING_CHANNEL_NAME as string
+      )
+    )
+  ),
+  IO.bind('votingStoreRef', () => IORef.newIORef<Set<string>>(Set.empty)),
+  Task.fromIO,
+  Task.chain(({ client, votingStoreRef, channelStoreRef }) => {
+    client.on('ready', readyListener);
 
-client.on('messageCreate', messageCreate(client));
+    client.on('messageCreate', messageCreate(client));
 
-client.on('messageUpdate', messageUpdate(client));
+    client.on('messageUpdate', messageUpdate(client));
 
-client.on('messageDelete', messageDelete(client));
+    client.on('messageDelete', messageDelete(client));
 
-client.on('interactionCreate', interactionCreate(client));
+    client.on('interactionCreate', interactionCreate(client, votingStoreRef, channelStoreRef));
 
-client.on('guildMemberAdd', guildMemberAdd(client));
+    client.on('guildMemberAdd', guildMemberAdd(client));
 
-client.on('guildMemberRemove', guildMemberRemove(client));
+    client.on('guildMemberRemove', guildMemberRemove(client));
 
-client.login(process.env.TOKEN);
+    return Task.of(client.login(process.env.TOKEN));
+  })
+)();

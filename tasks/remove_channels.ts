@@ -19,9 +19,35 @@ import {
   getCategoryTextChannels,
   getCommandOptionString,
   getTextChannelInfo,
+  isCategoryChannel,
+  isTextChannel,
 } from '../utils/channel';
 
-function removeChannels(client: Client<true>) {
+import { ChannelStoreRef, removeChannel, removeChannels } from '../store/new_exclude_channels';
+
+const includeChannels = (channelStoreRef: ChannelStoreRef) => (channel: Channel) => {
+  if (isCategoryChannel(channel)) {
+    return pipe(
+      IO.of(channel),
+      IO.chainFirst(
+        flow(getCategoryTextChannels, R.map(R.prop('id')), removeChannels(channelStoreRef))
+      ),
+      IO.map((channel) => `已監聽 **${channel.name}** 下的所有文字頻道`)
+    );
+  }
+
+  if (isTextChannel(channel)) {
+    return pipe(
+      IO.of(channel),
+      IO.chainFirst(flow(getTextChannelInfo, R.prop('id'), removeChannel(channelStoreRef))),
+      IO.map((channel) => `已監聽 **${channel.name}**`)
+    );
+  }
+
+  return IO.of('不支援的頻道類型');
+};
+
+export default function (client: Client<true>, channelStoreRef: ChannelStoreRef) {
   return (interaction: CommandInteraction) =>
     pipe(
       Option.some(interaction),
@@ -35,44 +61,9 @@ function removeChannels(client: Client<true>) {
         )
       ),
       IO.of,
-      IOOption.chain(
-        flow(
-          R.cond<[Channel], IO.IO<string>>([
-            [
-              R.propEq('type', ChannelType.GuildCategory),
-              (channel) =>
-                pipe(
-                  IO.of(channel as CategoryChannel),
-                  IO.chainFirst(
-                    flow(
-                      getCategoryTextChannels,
-                      R.map(R.prop('id')),
-                      exclude_channels.removeChannels
-                    )
-                  ),
-                  IO.map((channel) => `已監聽 **${channel.name}** 下的所有文字頻道`)
-                ),
-            ],
-            [
-              R.propEq('type', ChannelType.GuildText),
-              (channel) =>
-                pipe(
-                  IO.of(channel as TextChannel),
-                  IO.chainFirst(
-                    flow(getTextChannelInfo, R.prop('id'), exclude_channels.removeChannel)
-                  ),
-                  IO.map((channel) => `已監聽 **${channel.name}**`)
-                ),
-            ],
-            [R.T, constant(IO.of('不支援的頻道類型'))],
-          ]),
-          IOOption.fromIO
-        )
-      ),
+      IOOption.chain(flow(includeChannels(channelStoreRef), IOOption.fromIO)),
       IOOption.getOrElse(constant(IO.of('找不到頻道'))),
       Task.fromIO,
       Task.chain((msg) => TaskOption.tryCatch(() => interaction.reply(msg)))
     );
 }
-
-export default removeChannels;
