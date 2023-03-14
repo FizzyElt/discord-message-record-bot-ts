@@ -13,7 +13,6 @@ import * as TaskOption from 'fp-ts/TaskOption';
 import * as IOOption from 'fp-ts/IOOption';
 import { pipe, flow, constant } from 'fp-ts/function';
 import * as R from 'ramda';
-import exclude_channels from '../store/exclude_channels';
 
 import {
   getCategoryTextChannels,

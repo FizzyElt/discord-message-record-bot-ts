@@ -6,7 +6,6 @@ import * as Task from 'fp-ts/Task';
 import * as TaskOption from 'fp-ts/TaskOption';
 import * as Map from 'fp-ts/Map';
 import * as R from 'ramda';
-import exclude_channels from '../store/exclude_channels';
 
 import { ChannelStoreRef, readChannelStore } from '../store/exclude_channels';
 
