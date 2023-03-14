@@ -3,7 +3,7 @@ import { commandOperation } from '../tasks/command_operation';
 import * as TaskOption from 'fp-ts/TaskOption';
 import { pipe, identity } from 'fp-ts/function';
 import * as IORef from 'fp-ts/IORef';
-import { ChannelStoreRef } from '../store/new_exclude_channels';
+import { ChannelStoreRef } from '../store/exclude_channels';
 
 function interactionCreate(
   client: Client<true>,

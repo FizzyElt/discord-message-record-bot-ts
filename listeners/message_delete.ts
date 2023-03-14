@@ -1,13 +1,14 @@
 import { Client, Message, PartialMessage, Awaitable } from 'discord.js';
-import { pipe, flow } from 'fp-ts/function';
+import { pipe, flow, identity } from 'fp-ts/function';
 import * as O from 'fp-ts/Option';
+import * as IO from 'fp-ts/IO';
 import * as TO from 'fp-ts/TaskOption';
 import * as R from 'ramda';
-import excludeChannels from '../store/exclude_channels';
+import { ChannelStoreRef, hasChannel } from '../store/exclude_channels';
 import recordDeletedMsg from '../tasks/record_deleted_msg';
 import inviteLinkGuard from '../tasks/invite_link_guard';
 
-function messageDeleteListener(client: Client<true>) {
+function messageDeleteListener(client: Client<true>, channelStoreRef: ChannelStoreRef) {
   return (msg: Message<boolean> | PartialMessage): Awaitable<void> => {
     pipe(
       TO.some({ msg, client }),
@@ -22,7 +23,12 @@ function messageDeleteListener(client: Client<true>) {
         )
       ),
       TO.filter((params) => !params.msg.author?.bot),
-      TO.filter((params) => !excludeChannels.hasChannel(params.msg.channelId)()),
+      TO.chainFirstIOK(({ msg }) =>
+        pipe(
+          hasChannel(channelStoreRef)(msg.channelId),
+          IO.map(flow(R.not, O.fromPredicate(identity)))
+        )
+      ),
       TO.chain(recordDeletedMsg)
     )();
   };

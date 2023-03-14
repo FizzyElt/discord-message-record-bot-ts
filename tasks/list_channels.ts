@@ -8,7 +8,7 @@ import * as Map from 'fp-ts/Map';
 import * as R from 'ramda';
 import exclude_channels from '../store/exclude_channels';
 
-import { ChannelStoreRef, readChannelStore } from '../store/new_exclude_channels';
+import { ChannelStoreRef, readChannelStore } from '../store/exclude_channels';
 
 function listChannels(channelStoreRef: ChannelStoreRef) {
   return (interaction: CommandInteraction<CacheType>) =>

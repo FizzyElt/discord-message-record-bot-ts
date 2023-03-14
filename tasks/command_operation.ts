@@ -5,7 +5,7 @@ import * as IORef from 'fp-ts/IORef';
 import * as R from 'ramda';
 import { CommandName } from '../slash_command/command';
 
-import { ChannelStoreRef } from '../store/new_exclude_channels';
+import { ChannelStoreRef } from '../store/exclude_channels';
 
 import addChannels from './add_channels';
 import removeChannels from './remove_channels';

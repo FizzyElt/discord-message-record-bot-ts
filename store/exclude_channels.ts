@@ -1,71 +1,84 @@
-import * as R from 'ramda';
 import * as IORef from 'fp-ts/IORef';
 import * as IO from 'fp-ts/IO';
-import { pipe, flow } from 'fp-ts/function';
+import * as Map from 'fp-ts/Map';
+import * as Option from 'fp-ts/Option';
+import * as String from 'fp-ts/string';
+import * as Array from 'fp-ts/Array';
+import { pipe, tuple } from 'fp-ts/function';
+
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const sendedChannel = {
-  id: process.env.BOT_SENDING_CHANNEL_ID as string,
-  name: process.env.BOT_SENDING_CHANNEL_NAME as string,
-};
+export type ChannelStore = Map<string, string>;
+export type ChannelStoreRef = IORef.IORef<ChannelStore>;
 
-const excludeChannelsRef = IORef.newIORef(
-  new Map<string, string>([[sendedChannel.id, sendedChannel.name]])
+const isMember = Map.member(String.Eq);
+const insertChannel = Map.upsertAt(String.Eq);
+const unionChannel = Map.union<string, string>(String.Eq, { concat: (_, y) => y });
+const deleteChannel = Map.pop(String.Eq);
+const fromArray = Map.fromFoldable<'Array', string, string>(
+  String.Eq,
+  { concat: (_, y) => y },
+  Array.Foldable
 );
 
-const hasChannel = (id: string) =>
+export const readChannelStore = (ref: ChannelStoreRef) =>
   pipe(
-    getChannelMap(),
-    IO.map((map) => map.has(id))
-  );
-
-const getChannelMap = () =>
-  pipe(
-    excludeChannelsRef,
+    IO.of(ref),
     IO.map((ref) => ref.read())
   );
 
-const addChannel = ({ id, name = '' }: { id: string; name: string }) =>
+export const hasChannel = (ref: ChannelStoreRef) => (id: string) =>
+  pipe(readChannelStore(ref), IO.map(isMember(id)));
+
+export const addChannel =
+  (ref: ChannelStoreRef) =>
+  ({ id, name = '' }: { id: string; name: string }) =>
+    pipe(
+      IO.of(ref),
+      IO.chainFirst((ref) => ref.modify(insertChannel(id, name)))
+    );
+
+export const addChannels =
+  (ref: ChannelStoreRef) =>
+  (list: Array<{ id: string; name: string }> = []) => {
+    const map = pipe(
+      list,
+      Array.map(({ id, name }) => tuple(id, name)),
+      fromArray
+    );
+
+    return pipe(
+      IO.of(ref),
+      IO.chainFirst((ref) => ref.modify(unionChannel(map)))
+    );
+  };
+
+export const removeChannel = (ref: ChannelStoreRef) => (id: string) =>
   pipe(
-    excludeChannelsRef,
-    IO.chainFirst((ref) => ref.modify((map) => map.set(id, name))),
-    IO.map((ref) => ref.read())
+    IO.of(ref),
+    IO.chainFirst((ref) =>
+      ref.modify((map) =>
+        pipe(
+          deleteChannel(id)(map),
+          Option.map(([, map]) => map),
+          Option.getOrElse(() => map)
+        )
+      )
+    )
   );
 
-const addChannels = (list: Array<{ id: string; name: string }> = []) =>
-  pipe(
-    excludeChannelsRef,
-    IO.chain((ref) => ref.modify((map) => (list.forEach(({ id, name }) => map.set(id, name)), map)))
-  );
-
-const removeChannel = (id: string) =>
-  pipe(
-    excludeChannelsRef,
-    IO.map((ref) => {
-      if (R.equals(id, sendedChannel.id)) return false;
-
-      const map = ref.read();
-      const res = map.delete(id);
-      ref.write(map);
-      return res;
-    })
-  );
-
-const removeChannels = (ids: Array<string> = []) =>
-  pipe(
-    IO.Do,
-    IO.bind('ref', () => excludeChannelsRef),
-    IO.bind('ids', () => IO.of(ids.filter(flow(R.equals(sendedChannel.id), R.not)))),
-    IO.map(({ ref, ids }) => ref.modify((map) => (ids.forEach((id) => map.delete(id)), map)))
-  );
-
-export default {
-  hasChannel,
-  getChannelMap,
-  addChannel,
-  addChannels,
-  removeChannel,
-  removeChannels,
-};
+export const removeChannels =
+  (ref: ChannelStoreRef) =>
+  (ids: Array<string> = []) =>
+    pipe(
+      IO.of(ref),
+      IO.chainFirst((ref) =>
+        ref.modify(
+          Map.filterWithIndex<string, string>(
+            (key) => !ids.includes(key) || process.env.BOT_SENDING_CHANNEL_ID === key
+          )
+        )
+      )
+    );

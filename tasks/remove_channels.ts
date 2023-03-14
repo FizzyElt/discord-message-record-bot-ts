@@ -23,7 +23,7 @@ import {
   isTextChannel,
 } from '../utils/channel';
 
-import { ChannelStoreRef, removeChannel, removeChannels } from '../store/new_exclude_channels';
+import { ChannelStoreRef, removeChannel, removeChannels } from '../store/exclude_channels';
 
 const includeChannels = (channelStoreRef: ChannelStoreRef) => (channel: Channel) => {
   if (isCategoryChannel(channel)) {

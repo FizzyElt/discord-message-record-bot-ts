@@ -8,7 +8,7 @@ import * as Set from 'fp-ts/Set';
 import * as Map from 'fp-ts/Map';
 import { pipe } from 'fp-ts/function';
 
-import { ChannelStore } from './store/new_exclude_channels';
+import { ChannelStore } from './store/exclude_channels';
 
 import {
   readyListener,
@@ -51,11 +51,11 @@ pipe(
   Task.chain(({ client, votingStoreRef, channelStoreRef }) => {
     client.on('ready', readyListener);
 
-    client.on('messageCreate', messageCreate(client));
+    client.on('messageCreate', messageCreate(client, channelStoreRef));
 
-    client.on('messageUpdate', messageUpdate(client));
+    client.on('messageUpdate', messageUpdate(client, channelStoreRef));
 
-    client.on('messageDelete', messageDelete(client));
+    client.on('messageDelete', messageDelete(client, channelStoreRef));
 
     client.on('interactionCreate', interactionCreate(client, votingStoreRef, channelStoreRef));
 
