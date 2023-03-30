@@ -1,0 +1,8 @@
+version: '1'
+
+services:
+  app:
+    build: .
+    image: dc-bot
+    env_file:
+      - .env
