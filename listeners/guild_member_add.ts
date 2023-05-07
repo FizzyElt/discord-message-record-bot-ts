@@ -13,7 +13,7 @@ function guildMemberAddListener(client: Client<true>) {
     pipe(
       getLogChannel(client),
       TO.fromOption,
-      TO.chain((channel) =>
+      TO.flatMap((channel) =>
         TO.tryCatch(() =>
           (channel as GuildTextBasedChannel).send({
             content: createJoinMsg(guildMember.nickname || guildMember.displayName),

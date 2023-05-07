@@ -30,7 +30,7 @@ function messageCreateListener(client: Client<true>, channelStoreRef: ChannelSto
           IO.map(flow(R.not, O.fromPredicate(identity)))
         )
       ),
-      TO.chain(recordCreatedMsg)
+      TO.flatMap(recordCreatedMsg)
     )();
   };
 }

@@ -22,7 +22,7 @@ function messageUpdateListener(client: Client<true>, channelStoreRef: ChannelSto
           IO.map(flow(R.not, O.fromPredicate(identity)))
         )
       ),
-      TO.chain(recordUpdatedMsg)
+      TO.flatMap(recordUpdatedMsg)
     )();
   };
 }

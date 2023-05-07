@@ -34,7 +34,7 @@ const recordDeleteMsg: RecordDeleteMsg = flow(
   ),
   TaskOption.filter(({ sendChannel }) => sendChannel.isTextBased()),
   TaskOption.bind('sendString', flow(R.prop('msg'), getDeletedMsgString, TaskOption.of)),
-  TaskOption.chain(({ sendChannel, sendString }) =>
+  TaskOption.flatMap(({ sendChannel, sendString }) =>
     TaskOption.tryCatch(() =>
       (sendChannel as GuildTextBasedChannel).send({
         content: sendString,

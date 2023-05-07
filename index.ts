@@ -48,7 +48,7 @@ pipe(
   ),
   IO.bind('votingStoreRef', () => IORef.newIORef<Set<string>>(Set.empty)),
   Task.fromIO,
-  Task.chain(({ client, votingStoreRef, channelStoreRef }) => {
+  Task.flatMap(({ client, votingStoreRef, channelStoreRef }) => {
     client.on('ready', readyListener);
 
     client.on('messageCreate', messageCreate(client, channelStoreRef));

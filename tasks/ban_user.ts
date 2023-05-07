@@ -122,7 +122,7 @@ function banUser(client: Client<true>, votingStoreRef: IORef.IORef<Set<string>>)
           ? findUserByMembers(userId)(interaction.guild.members)
           : TaskOption.none
       ),
-      Task.chain(
+      Task.flatMap(
         Option.match(
           () =>
             TaskOption.tryCatch(() =>
