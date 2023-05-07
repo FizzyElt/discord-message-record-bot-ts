@@ -37,7 +37,7 @@ const recordUpdateMsg: RecordUpdateMsg = flow(
   ),
   TaskOption.filter(({ sendChannel }) => sendChannel.isTextBased()),
   TaskOption.bind('sendString', flow(R.prop('newMsg'), getUpdatedMsgString, TaskOption.of)),
-  TaskOption.chain(({ sendChannel, oldMsg, sendString }) =>
+  TaskOption.flatMap(({ sendChannel, oldMsg, sendString }) =>
     TaskOption.tryCatch(() =>
       (sendChannel as GuildTextBasedChannel).send({
         content: sendString,

@@ -42,7 +42,7 @@ export default function (client: Client<true>, channelStoreRef: ChannelStoreRef)
     pipe(
       Option.some(interaction),
       Option.map(getCommandOptionString('id')),
-      Option.chain((idOrName) =>
+      Option.flatMap((idOrName) =>
         Option.fromNullable(
           client.channels.cache.find(
             // @ts-ignore types/ramda not defined "whereAny"
@@ -51,9 +51,9 @@ export default function (client: Client<true>, channelStoreRef: ChannelStoreRef)
         )
       ),
       IO.of,
-      IOOption.chain(flow(excludeChannels(channelStoreRef), IOOption.fromIO)),
+      IOOption.flatMap(flow(excludeChannels(channelStoreRef), IOOption.fromIO)),
       IOOption.getOrElse(constant(IO.of('找不到頻道'))),
       Task.fromIO,
-      Task.chain((msg) => TaskOption.tryCatch(() => interaction.reply(msg)))
+      Task.flatMap((msg) => TaskOption.tryCatch(() => interaction.reply(msg)))
     );
 }

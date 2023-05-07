@@ -17,7 +17,7 @@ const inviteLinkGuard = flow<
 >(
   TaskOption.of,
   TaskOption.filter((msg) => R.is(String, msg.content) && isDiscordInviteString(msg.content)),
-  TaskOption.chain(
+  TaskOption.flatMap(
     R.ifElse(R.prop('deletable'), (msg) => TaskOption.tryCatch(() => msg.delete()), TaskOption.of)
   )
 );

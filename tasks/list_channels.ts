@@ -21,7 +21,7 @@ function listChannels(channelStoreRef: ChannelStoreRef) {
         )
       ),
       Task.fromIO,
-      Task.chain((msg) => TaskOption.tryCatch(() => interaction.reply(msg)))
+      Task.flatMap((msg) => TaskOption.tryCatch(() => interaction.reply(msg)))
     );
 }
 

@@ -19,7 +19,7 @@ function guildMemberRemoveListener(client: Client<true>) {
     pipe(
       getLogChannel(client),
       TO.fromOption,
-      TO.chain((channel) =>
+      TO.flatMap((channel) =>
         TO.tryCatch(() =>
           (channel as GuildTextBasedChannel).send({
             content: createLeaveMsg(guildMember.nickname || guildMember.displayName),
