@@ -20,8 +20,8 @@ dependencies:
     specifier: ^16.0.3
     version: 16.0.3
   fp-ts:
-    specifier: ^2.14.0
-    version: 2.14.0
+    specifier: ^2.15.0
+    version: 2.15.0
   ramda:
     specifier: ^0.28.0
     version: 0.28.0
@@ -233,8 +233,8 @@ packages:
       token-types: 5.0.1
     dev: false
 
-  /fp-ts@2.14.0:
-    resolution: {integrity: sha512-QLagLSYAgMA00pZzUzeksH/78Sd14y7+Gc2A8Yaja3/IpGOFMdm/gYBuDMxYqLsJ58iT5lz+bJb953RAeFfp1A==}
+  /fp-ts@2.15.0:
+    resolution: {integrity: sha512-3o6EllAvGuCsDgjM+frscLKDRPR9pqbrg13tJ13z86F4eni913kBV8h85rM6zpu2fEvJ8RWA0ouYlUWwHEmxTg==}
     dev: false
 
   /ieee754@1.2.1:
