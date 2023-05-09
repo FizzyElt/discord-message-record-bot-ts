@@ -12,7 +12,7 @@ function messageCreateListener(client: Client<true>, channelStoreRef: ChannelSto
   return (msg: Message<boolean>): Awaitable<void> => {
     pipe(
       TO.some({ client, msg }),
-      TO.chainFirst(
+      TO.tap(
         flow(
           R.prop('msg'),
           inviteLinkGuard,

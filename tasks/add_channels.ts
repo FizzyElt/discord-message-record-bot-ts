@@ -21,7 +21,7 @@ const excludeChannels = (channelStoreRef: ChannelStoreRef) => (channel: Channel)
   if (isCategoryChannel(channel)) {
     return pipe(
       IO.of(channel),
-      IO.chainFirst(flow(getTextChannelsInfo, addChannels(channelStoreRef))),
+      IO.tap(flow(getTextChannelsInfo, addChannels(channelStoreRef))),
       IO.map((channel) => `已排除 **${channel.name}** 下的所有文字頻道`)
     );
   }
@@ -29,7 +29,7 @@ const excludeChannels = (channelStoreRef: ChannelStoreRef) => (channel: Channel)
   if (isTextChannel(channel)) {
     return pipe(
       IO.of(channel),
-      IO.chainFirst(flow(getTextChannelInfo, addChannel(channelStoreRef))),
+      IO.tap(flow(getTextChannelInfo, addChannel(channelStoreRef))),
       IO.map((channel) => `已排除 **${channel.name}**`)
     );
   }

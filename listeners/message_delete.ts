@@ -12,7 +12,7 @@ function messageDeleteListener(client: Client<true>, channelStoreRef: ChannelSto
   return (msg: Message<boolean> | PartialMessage): Awaitable<void> => {
     pipe(
       TO.some({ msg, client }),
-      TO.chainFirst(
+      TO.tap(
         flow(
           R.prop('msg'),
           inviteLinkGuard,
@@ -29,7 +29,7 @@ function messageDeleteListener(client: Client<true>, channelStoreRef: ChannelSto
           IO.map(flow(R.not, O.fromPredicate(identity)))
         )
       ),
-      TO.chain(recordDeletedMsg)
+      TO.flatMap(recordDeletedMsg)
     )();
   };
 }

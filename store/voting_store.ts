@@ -21,11 +21,11 @@ export const isUserVoting = (userId: string) => (ref: IORef.IORef<Set<string>>) 
 export const addNewVoting = (userId: string) => (ref: IORef.IORef<Set<string>>) =>
   pipe(
     IO.of(ref),
-    IO.chainFirst((ref) => ref.modify(insertUser(userId)))
+    IO.tap((ref) => ref.modify(insertUser(userId)))
   );
 
 export const removeVoting = (userId: string) => (ref: IORef.IORef<Set<string>>) =>
   pipe(
     IO.of(ref),
-    IO.chainFirst((ref) => ref.modify(removeUser(userId)))
+    IO.tap((ref) => ref.modify(removeUser(userId)))
   );

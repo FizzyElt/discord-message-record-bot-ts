@@ -1,11 +1,4 @@
-import {
-  Client,
-  Channel,
-  ChannelType,
-  CategoryChannel,
-  TextChannel,
-  CommandInteraction,
-} from 'discord.js';
+import { Client, Channel, CommandInteraction } from 'discord.js';
 import * as Option from 'fp-ts/Option';
 import * as IO from 'fp-ts/IO';
 import * as Task from 'fp-ts/Task';
@@ -28,9 +21,7 @@ const includeChannels = (channelStoreRef: ChannelStoreRef) => (channel: Channel)
   if (isCategoryChannel(channel)) {
     return pipe(
       IO.of(channel),
-      IO.chainFirst(
-        flow(getCategoryTextChannels, R.map(R.prop('id')), removeChannels(channelStoreRef))
-      ),
+      IO.tap(flow(getCategoryTextChannels, R.map(R.prop('id')), removeChannels(channelStoreRef))),
       IO.map((channel) => `已監聽 **${channel.name}** 下的所有文字頻道`)
     );
   }
@@ -38,7 +29,7 @@ const includeChannels = (channelStoreRef: ChannelStoreRef) => (channel: Channel)
   if (isTextChannel(channel)) {
     return pipe(
       IO.of(channel),
-      IO.chainFirst(flow(getTextChannelInfo, R.prop('id'), removeChannel(channelStoreRef))),
+      IO.tap(flow(getTextChannelInfo, R.prop('id'), removeChannel(channelStoreRef))),
       IO.map((channel) => `已監聽 **${channel.name}**`)
     );
   }

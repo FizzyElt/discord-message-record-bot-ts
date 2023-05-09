@@ -37,7 +37,7 @@ export const addChannel =
   ({ id, name = '' }: { id: string; name: string }) =>
     pipe(
       IO.of(ref),
-      IO.chainFirst((ref) => ref.modify(insertChannel(id, name)))
+      IO.tap((ref) => ref.modify(insertChannel(id, name)))
     );
 
 export const addChannels =
@@ -51,14 +51,14 @@ export const addChannels =
 
     return pipe(
       IO.of(ref),
-      IO.chainFirst((ref) => ref.modify(unionChannel(map)))
+      IO.tap((ref) => ref.modify(unionChannel(map)))
     );
   };
 
 export const removeChannel = (ref: ChannelStoreRef) => (id: string) =>
   pipe(
     IO.of(ref),
-    IO.chainFirst((ref) =>
+    IO.tap((ref) =>
       ref.modify((map) =>
         pipe(
           deleteChannel(id)(map),
@@ -74,7 +74,7 @@ export const removeChannels =
   (ids: Array<string> = []) =>
     pipe(
       IO.of(ref),
-      IO.chainFirst((ref) =>
+      IO.tap((ref) =>
         ref.modify(
           Map.filterWithIndex<string, string>(
             (key) => !ids.includes(key) || process.env.BOT_SENDING_CHANNEL_ID === key

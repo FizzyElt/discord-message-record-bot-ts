@@ -70,7 +70,7 @@ const votingFlow = ({
         fetchReply: true,
       })
     ),
-    TaskOption.chainFirst(reactMsg('✅')),
+    TaskOption.tap(reactMsg('✅')),
     TaskOption.chainFirstIOK(() => addNewVoting(member.user.id)(votingStoreRef)),
     TaskOption.bindTo('replyMsg'),
     TaskOption.bind('collected', ({ replyMsg }) =>
@@ -79,7 +79,7 @@ const votingFlow = ({
         time: 3 * 60 * 1000,
       })(replyMsg)
     ),
-    TaskOption.chainFirst(({ collected, replyMsg }) => {
+    TaskOption.tap(({ collected, replyMsg }) => {
       // member is disabled
       if (member.isCommunicationDisabled())
         return TaskOption.tryCatch(() =>
