@@ -24,7 +24,7 @@ function messageCreateListener(client: Client<true>, channelStoreRef: ChannelSto
       ),
       TO.filter(({ msg }) => !msg.author.bot),
       TO.filter(({ client, msg }) => !R.equals(msg.author.id, client.user.id)),
-      TO.chainFirstIOK(({ msg }) =>
+      TO.tapIO(({ msg }) =>
         pipe(
           hasChannel(channelStoreRef)(msg.channelId),
           IO.map(flow(R.not, O.fromPredicate(identity)))

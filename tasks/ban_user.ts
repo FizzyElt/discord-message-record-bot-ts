@@ -71,7 +71,7 @@ const votingFlow = ({
       })
     ),
     TaskOption.tap(reactMsg('✅')),
-    TaskOption.chainFirstIOK(() => addNewVoting(member.user.id)(votingStoreRef)),
+    TaskOption.tapIO(() => addNewVoting(member.user.id)(votingStoreRef)),
     TaskOption.bindTo('replyMsg'),
     TaskOption.bind('collected', ({ replyMsg }) =>
       awaitReactions({
@@ -105,7 +105,7 @@ const votingFlow = ({
         replyMsg.reply(`**${count}** 票，**${member.nickname || member.user.username}** 逃過一劫`)
       );
     }),
-    TaskOption.chainFirstIOK(() => removeVoting(member.user.id)(votingStoreRef)),
+    TaskOption.tapIO(() => removeVoting(member.user.id)(votingStoreRef)),
     TaskOption.map(R.prop('replyMsg'))
   );
 
