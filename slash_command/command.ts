@@ -5,7 +5,7 @@ import {
 } from '@discordjs/builders';
 
 import { APIApplicationCommandOptionChoice } from 'discord-api-types/v10';
-
+import { choiceList } from '../utils/voteChoice';
 const createNumberChoice = (
   name: string,
   value: number
@@ -13,6 +13,11 @@ const createNumberChoice = (
   name: name,
   value: value,
 });
+
+const createStringChoice = (
+  name: string,
+  value: string
+): APIApplicationCommandOptionChoice<string> => ({ name: name, value: value });
 
 const minsChoices: Array<[string, number]> = [
   ['10 minutes', 10],
@@ -27,6 +32,7 @@ export enum CommandName {
   remove_channels = 'remove_channels',
   channel_list = 'channel_list',
   ban_user = 'ban_user',
+  ban_user_plus = 'ban_user_plus',
 }
 
 export const commands = [
@@ -71,6 +77,24 @@ export const commands = [
         .setName('time')
         .setDescription('time(mins)')
         .setChoices(...minsChoices.map(([name, value]) => createNumberChoice(name, value)))
+        .setRequired(true)
+    ),
+
+  new SlashCommandBuilder()
+    .setName(CommandName.ban_user_plus)
+    .setDescription('ban user plus')
+    .addStringOption(
+      new SlashCommandStringOption()
+        .setName('mention_user')
+        .setDescription('mention user')
+        .setMaxLength(150)
+        .setRequired(true)
+    )
+    .addStringOption(
+      new SlashCommandStringOption()
+        .setName('time')
+        .setDescription('time')
+        .setChoices(...choiceList.map((info) => createStringChoice(info.name, info.key)))
         .setRequired(true)
     ),
 ];
