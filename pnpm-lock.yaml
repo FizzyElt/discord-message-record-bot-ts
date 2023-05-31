@@ -10,6 +10,9 @@ dependencies:
   date-fns:
     specifier: ^2.29.3
     version: 2.29.3
+  date-fns-tz:
+    specifier: ^2.0.0
+    version: 2.0.0(date-fns@2.29.3)
   discord-api-types:
     specifier: ^0.37.26
     version: 0.37.33
@@ -20,8 +23,8 @@ dependencies:
     specifier: ^16.0.3
     version: 16.0.3
   fp-ts:
-    specifier: ^2.15.0
-    version: 2.15.0
+    specifier: ^2.16.0
+    version: 2.16.0
   ramda:
     specifier: ^0.28.0
     version: 0.28.0
@@ -180,6 +183,14 @@ packages:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
     dev: true
 
+  /date-fns-tz@2.0.0(date-fns@2.29.3):
+    resolution: {integrity: sha512-OAtcLdB9vxSXTWHdT8b398ARImVwQMyjfYGkKD2zaGpHseG2UPHbHjXELReErZFxWdSLph3c2zOaaTyHfOhERQ==}
+    peerDependencies:
+      date-fns: '>=2.0.0'
+    dependencies:
+      date-fns: 2.29.3
+    dev: false
+
   /date-fns@2.29.3:
     resolution: {integrity: sha512-dDCnyH2WnnKusqvZZ6+jA1O51Ibt8ZMRNkDZdyAyK4YfbDwa/cEmuztzG5pk6hqlp9aSBPYcjOlktquahGwGeA==}
     engines: {node: '>=0.11'}
@@ -233,8 +244,8 @@ packages:
       token-types: 5.0.1
     dev: false
 
-  /fp-ts@2.15.0:
-    resolution: {integrity: sha512-3o6EllAvGuCsDgjM+frscLKDRPR9pqbrg13tJ13z86F4eni913kBV8h85rM6zpu2fEvJ8RWA0ouYlUWwHEmxTg==}
+  /fp-ts@2.16.0:
+    resolution: {integrity: sha512-bLq+KgbiXdTEoT1zcARrWEpa5z6A/8b7PcDW7Gef3NSisQ+VS7ll2Xbf1E+xsgik0rWub/8u0qP/iTTjj+PhxQ==}
     dev: false
 
   /ieee754@1.2.1:

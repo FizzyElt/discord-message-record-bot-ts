@@ -23,7 +23,7 @@ function messageDeleteListener(client: Client<true>, channelStoreRef: ChannelSto
         )
       ),
       TO.filter((params) => !params.msg.author?.bot),
-      TO.chainFirstIOK(({ msg }) =>
+      TO.tapIO(({ msg }) =>
         pipe(
           hasChannel(channelStoreRef)(msg.channelId),
           IO.map(flow(R.not, O.fromPredicate(identity)))

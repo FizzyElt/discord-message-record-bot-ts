@@ -16,7 +16,7 @@ function messageUpdateListener(client: Client<true>, channelStoreRef: ChannelSto
       O.some({ client, newMsg, oldMsg }),
       O.filter((params) => !params.newMsg.author?.bot),
       TO.fromOption,
-      TO.chainFirstIOK(({ newMsg }) =>
+      TO.tapIO(({ newMsg }) =>
         pipe(
           hasChannel(channelStoreRef)(newMsg.channelId),
           IO.map(flow(R.not, O.fromPredicate(identity)))
