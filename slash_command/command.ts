@@ -32,7 +32,7 @@ export enum CommandName {
   remove_channels = 'remove_channels',
   channel_list = 'channel_list',
   ban_user = 'ban_user',
-  ban_user_plus = 'ban_user_plus',
+  ban_user_legacy = 'ban_user_legacy',
 }
 
 export const commands = [
@@ -63,7 +63,7 @@ export const commands = [
     .setDescription('list exclusive channels'),
 
   new SlashCommandBuilder()
-    .setName(CommandName.ban_user)
+    .setName(CommandName.ban_user_legacy)
     .setDescription('ban user')
     .addStringOption(
       new SlashCommandStringOption()
@@ -81,7 +81,7 @@ export const commands = [
     ),
 
   new SlashCommandBuilder()
-    .setName(CommandName.ban_user_plus)
+    .setName(CommandName.ban_user)
     .setDescription('ban user plus')
     .addStringOption(
       new SlashCommandStringOption()
