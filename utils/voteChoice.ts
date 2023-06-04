@@ -19,8 +19,8 @@ export const choiceList: Array<TimeoutInfo> = [
     key: '10-mins',
     name: '10 分鐘',
     time: 10 * minute,
-    votingMinutes: 2,
-    voteThreshold: 2,
+    votingMinutes: 1,
+    voteThreshold: 3,
   },
   {
     key: '30-mins',
@@ -29,9 +29,9 @@ export const choiceList: Array<TimeoutInfo> = [
     votingMinutes: 3,
     voteThreshold: 3,
   },
-  { key: '1-hour', name: '1 小時', time: hour, votingMinutes: 3, voteThreshold: 4 },
-  { key: '1-day', name: '1 天', time: day, votingMinutes: 5, voteThreshold: 5 },
-  { key: '1-week', name: '1 星期', time: week, votingMinutes: 8, voteThreshold: 6 },
+  { key: '1-hour', name: '1 小時', time: hour, votingMinutes: 3, voteThreshold: 5 },
+  { key: '1-day', name: '1 天', time: day, votingMinutes: 5, voteThreshold: 6 },
+  { key: '1-week', name: '1 星期', time: week, votingMinutes: 8, voteThreshold: 8 },
   { key: '4-week', name: '28 天', time: 28 * day, votingMinutes: 10, voteThreshold: 10 },
 ];
 

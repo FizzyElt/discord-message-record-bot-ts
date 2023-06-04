@@ -33,6 +33,7 @@ export enum CommandName {
   channel_list = 'channel_list',
   ban_user = 'ban_user',
   ban_user_legacy = 'ban_user_legacy',
+  timeout_info = 'timeout_info',
 }
 
 export const commands = [
@@ -97,4 +98,6 @@ export const commands = [
         .setChoices(...choiceList.map((info) => createStringChoice(info.name, info.key)))
         .setRequired(true)
     ),
+
+  new SlashCommandBuilder().setName(CommandName.timeout_info).setDescription('投票規則'),
 ];

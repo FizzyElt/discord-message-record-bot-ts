@@ -15,15 +15,23 @@ import { pipe } from 'fp-ts/function';
 
 import * as R from 'ramda';
 
-import { formatDistanceToNow } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
-
 import { addNewVoting, removeVoting, isUserVoting } from '../store/voting_store';
 import { getCommandOptionString } from '../utils/channel';
 import findUserByMembers from '../utils/find_user_by_members';
 import isAdmin from '../utils/isAdmin';
 
 import { findTimeoutInfo, TimeoutInfo, minute } from '../utils/voteChoice';
+import {
+  memberTimeoutVotePassed,
+  startMemberVote,
+  canNotFindUser,
+  doNotBanAdmin,
+  doNotBanBot,
+  memberDisableTime,
+  isMemberVoting,
+  isMemberFree,
+} from '../utils/reply_msg';
+
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -46,13 +54,7 @@ const timeoutMember = ({
   member: GuildMember;
 }) =>
   pipe(
-    TaskOption.tryCatch(() =>
-      msg.reply(
-        `恭喜獲得 **${count}/${timeoutInfo.voteThreshold}** 票 **${
-          member.nickname || member.user.username
-        }** 禁言 ${timeoutInfo.name}`
-      )
-    ),
+    TaskOption.tryCatch(() => msg.reply(memberTimeoutVotePassed(member, timeoutInfo, count))),
     TaskOption.apFirst(TaskOption.tryCatch(() => member.timeout(timeoutInfo.time * 1000)))
   );
 
@@ -69,12 +71,7 @@ const votingFlow = ({
 }) =>
   pipe(
     TaskOption.tryCatch(() =>
-      interaction.reply({
-        content: `是否禁言 **${member.nickname || member.user.username} ** ${timeoutInfo.name}\n*${
-          timeoutInfo.votingMinutes
-        } 分鐘後累積 ${timeoutInfo.voteThreshold} 票者禁言*`,
-        fetchReply: true,
-      })
+      interaction.reply({ content: startMemberVote(member, timeoutInfo), fetchReply: true })
     ),
     TaskOption.tap(reactMsg('✅')),
     TaskOption.tapIO(() => addNewVoting(member.user.id)(votingStoreRef)),
@@ -90,15 +87,7 @@ const votingFlow = ({
       if (member.isCommunicationDisabled())
         return TaskOption.tryCatch(() =>
           replyMsg.reply({
-            content: `${
-              member.nickname || member.user.username
-            } 還在服刑\n剩餘時間 ${formatDistanceToNow(
-              member.communicationDisabledUntil
-            )}\n出獄時間 ${formatInTimeZone(
-              member.communicationDisabledUntil,
-              process.env.TIMEZONE || 'Asia/Taipei',
-              'yyyy-MM-dd HH:mm'
-            )}`,
+            content: memberDisableTime(member),
           })
         );
 
@@ -112,11 +101,9 @@ const votingFlow = ({
       if (count >= timeoutInfo.voteThreshold)
         return timeoutMember({ count: count, msg: replyMsg, timeoutInfo, member: member });
 
-      return TaskOption.tryCatch(() =>
-        replyMsg.reply(`**${count}** 票，**${member.nickname || member.user.username}** 逃過一劫`)
-      );
+      return TaskOption.tryCatch(() => replyMsg.reply(isMemberFree(member, count)));
     }),
-    TaskOption.tapIO(() => removeVoting(member.user.id)(votingStoreRef)),
+    Task.tapIO(() => pipe(votingStoreRef, removeVoting(member.user.id))),
     TaskOption.map(R.prop('replyMsg'))
   );
 
@@ -137,33 +124,25 @@ function banUser(client: Client<true>, votingStoreRef: IORef.IORef<Set<string>>)
         Option.match(
           () =>
             TaskOption.tryCatch(() =>
-              interaction.reply({ content: '找不到使用者', fetchReply: true })
+              interaction.reply({ content: canNotFindUser(), fetchReply: true })
             ),
           ({ member, timeoutInfo }) => {
             if (isAdmin(member))
               return TaskOption.tryCatch(() =>
-                interaction.reply({ content: '你不可以 ban 管理員', fetchReply: true })
+                interaction.reply({ content: doNotBanAdmin(), fetchReply: true })
               );
 
             // is bot self
             if (R.equals(member.user.id, client.user.id))
               return TaskOption.tryCatch(() =>
-                interaction.reply({ content: '你不可以 ban 我', fetchReply: true })
+                interaction.reply({ content: doNotBanBot(), fetchReply: true })
               );
 
             // member is disabled
             if (member.isCommunicationDisabled())
               return TaskOption.tryCatch(() =>
                 interaction.reply({
-                  content: `**${
-                    member.nickname || member.user.username
-                  }** 還在服刑\n剩餘時間 ${formatDistanceToNow(
-                    member.communicationDisabledUntil
-                  )}\n出獄時間 ${formatInTimeZone(
-                    member.communicationDisabledUntil,
-                    process.env.TIMEZONE || 'Asia/Taipei',
-                    'yyyy-MM-dd HH:mm'
-                  )}`,
+                  content: memberDisableTime(member),
                   fetchReply: true,
                 })
               );
@@ -171,9 +150,7 @@ function banUser(client: Client<true>, votingStoreRef: IORef.IORef<Set<string>>)
             if (isUserVoting(member.user.id)(votingStoreRef)())
               return TaskOption.tryCatch(() =>
                 interaction.reply({
-                  content: `**${
-                    member.nickname || member.user.username
-                  }** 正在審判中\n請等待審判結束後重新發起投票`,
+                  content: isMemberVoting(member),
                   fetchReply: true,
                 })
               );
