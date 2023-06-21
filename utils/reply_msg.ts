@@ -42,7 +42,7 @@ export const memberTimeoutVotePassed = (
   timeoutInfo: TimeoutInfo,
   count: number
 ): string =>
-  `恭喜獲得 **${count}/${timeoutInfo.voteThreshold}** 票 **${
+  `恭喜獲得 **${count} / ${timeoutInfo.voteThreshold}** 票 **${
     member.nickname || member.user.username
   }** 禁言 ${timeoutInfo.name}`;
 
