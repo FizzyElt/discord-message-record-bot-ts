@@ -12,6 +12,8 @@ import removeChannels from './remove_channels';
 import listChannels from './list_channels';
 import banUserLegacy from './ban_user_legacy';
 import banUser from './ban_user';
+import subscribe from './subscribe';
+import unsubscribe from './unsubscribe';
 
 import { listTimeoutChoices } from '../utils/reply_msg';
 
@@ -34,6 +36,8 @@ function getOperationByCommand(
       eqCommandName(CommandName.timeout_info),
       (interaction) => TO.tryCatch(() => interaction.reply(listTimeoutChoices())),
     ],
+    [eqCommandName(CommandName.subscribe), subscribe(process.env.VOTE_ROLE_ID || '')],
+    [eqCommandName(CommandName.unsubscribe), unsubscribe(process.env.VOTE_ROLE_ID || '')],
     [R.T, (interaction) => TO.tryCatch(() => interaction.reply('不支援的指令'))],
   ]);
 }

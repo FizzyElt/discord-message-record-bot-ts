@@ -46,10 +46,19 @@ export const memberTimeoutVotePassed = (
     member.nickname || member.user.username
   }** 禁言 ${timeoutInfo.name}`;
 
-export const startMemberVote = (member: GuildMember, timeoutInfo: TimeoutInfo): string =>
-  `是否禁言 **${member.nickname || member.user.username} ** ${timeoutInfo.name}\n*${
+export const startMemberVote = (
+  member: GuildMember,
+  timeoutInfo: TimeoutInfo,
+  roleId?: string
+): string => {
+  const baseMsg = `是否禁言 **${member.nickname || member.user.username} ** ${timeoutInfo.name}\n*${
     timeoutInfo.votingMinutes
   } 分鐘後累積 ${timeoutInfo.voteThreshold} 票者禁言*`;
+
+  const mentionRole = roleId ? `請 <@&${roleId}> 投下神聖的一票` : '';
+
+  return `${baseMsg}\n${mentionRole}`;
+};
 
 export const listTimeoutChoices = () =>
   pipe(

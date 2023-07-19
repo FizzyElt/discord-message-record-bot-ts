@@ -34,6 +34,8 @@ export enum CommandName {
   ban_user = 'ban_user',
   ban_user_legacy = 'ban_user_legacy',
   timeout_info = 'timeout_info',
+  subscribe = 'subscribe',
+  unsubscribe = 'unsubscribe',
 }
 
 export const commands = [
@@ -100,4 +102,7 @@ export const commands = [
     ),
 
   new SlashCommandBuilder().setName(CommandName.timeout_info).setDescription('投票規則'),
+
+  new SlashCommandBuilder().setName(CommandName.subscribe).setDescription('成為民主的一員'),
+  new SlashCommandBuilder().setName(CommandName.unsubscribe).setDescription('取消民主的一員'),
 ];

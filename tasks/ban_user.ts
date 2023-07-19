@@ -63,15 +63,20 @@ const votingFlow = ({
   interaction,
   timeoutInfo,
   votingStoreRef,
+  mentionRole,
 }: {
   member: GuildMember;
   timeoutInfo: TimeoutInfo;
   interaction: CommandInteraction<CacheType>;
   votingStoreRef: IORef.IORef<Set<string>>;
+  mentionRole?: string;
 }) =>
   pipe(
     TaskOption.tryCatch(() =>
-      interaction.reply({ content: startMemberVote(member, timeoutInfo), fetchReply: true })
+      interaction.reply({
+        content: startMemberVote(member, timeoutInfo, mentionRole),
+        fetchReply: true,
+      })
     ),
     TaskOption.tap(reactMsg('✅')),
     TaskOption.tapIO(() => addNewVoting(member.user.id)(votingStoreRef)),
@@ -155,7 +160,13 @@ function banUser(client: Client<true>, votingStoreRef: IORef.IORef<Set<string>>)
                 })
               );
 
-            return votingFlow({ member, interaction, timeoutInfo, votingStoreRef });
+            return votingFlow({
+              member,
+              interaction,
+              timeoutInfo,
+              votingStoreRef,
+              mentionRole: process.env.VOTE_ROLE_ID,
+            });
           }
         )
       )

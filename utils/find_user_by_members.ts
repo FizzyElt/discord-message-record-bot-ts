@@ -14,7 +14,7 @@ const findUserByMembers = (idOrMention: string) => (members: GuildMemberManager)
           (id) => TaskOption.tryCatch(() => members.fetch(id))
         ),
     ],
-    [R.T, constant(TaskOption.none)],
+    [R.T, (id) => TaskOption.tryCatch(() => members.fetch(id))],
   ])(idOrMention);
 
 export default findUserByMembers;
