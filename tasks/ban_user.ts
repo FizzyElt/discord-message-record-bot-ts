@@ -74,6 +74,7 @@ const votingFlow = ({
   pipe(
     TaskOption.tryCatch(() =>
       interaction.reply({
+        allowedMentions: mentionRole ? { roles: [mentionRole] } : undefined,
         content: startMemberVote(member, timeoutInfo, mentionRole),
         fetchReply: true,
       })
