@@ -3,13 +3,14 @@
 Implement with functional programming
 
 ## tools
+
 - discord.js
 - fp-ts
 - ramda
 - date-fns
 
-
 ## functions
+
 - [X] record message
   - [X] new message
   - [X] update message
@@ -21,3 +22,6 @@ Implement with functional programming
   - [X] ban user
   - [X] unban user
 - [X] discord invite link guard
+- [X] timeout member
+  - [X] voting flow
+- [X] subscribe/unsubscribe role

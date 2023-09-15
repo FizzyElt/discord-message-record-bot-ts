@@ -1,5 +1,3 @@
-import * as R from 'ramda';
-
 const formatRemainTime = (time: number) => {
   const minute = 60 * 1000;
   const hour = 60 * minute;

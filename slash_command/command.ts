@@ -1,38 +1,18 @@
-import {
-  SlashCommandBuilder,
-  SlashCommandStringOption,
-  SlashCommandIntegerOption,
-} from '@discordjs/builders';
+import { SlashCommandBuilder, SlashCommandStringOption } from '@discordjs/builders';
 
 import { APIApplicationCommandOptionChoice } from 'discord-api-types/v10';
 import { choiceList } from '../utils/voteChoice';
-const createNumberChoice = (
-  name: string,
-  value: number
-): APIApplicationCommandOptionChoice<number> => ({
-  name: name,
-  value: value,
-});
 
 const createStringChoice = (
   name: string,
   value: string
 ): APIApplicationCommandOptionChoice<string> => ({ name: name, value: value });
 
-const minsChoices: Array<[string, number]> = [
-  ['10 minutes', 10],
-  ['30 minutes', 30],
-  ['1 hour', 60],
-  ['1 day', 60 * 24],
-  ['1 week', 60 * 24 * 7],
-];
-
 export enum CommandName {
   add_channels = 'add_channels',
   remove_channels = 'remove_channels',
   channel_list = 'channel_list',
   ban_user = 'ban_user',
-  ban_user_legacy = 'ban_user_legacy',
   timeout_info = 'timeout_info',
   subscribe = 'subscribe',
   unsubscribe = 'unsubscribe',
@@ -64,24 +44,6 @@ export const commands = [
   new SlashCommandBuilder()
     .setName(CommandName.channel_list)
     .setDescription('list exclusive channels'),
-
-  new SlashCommandBuilder()
-    .setName(CommandName.ban_user_legacy)
-    .setDescription('ban user')
-    .addStringOption(
-      new SlashCommandStringOption()
-        .setName('mention_user')
-        .setDescription('mention user')
-        .setMaxLength(150)
-        .setRequired(true)
-    )
-    .addIntegerOption(
-      new SlashCommandIntegerOption()
-        .setName('time')
-        .setDescription('time(mins)')
-        .setChoices(...minsChoices.map(([name, value]) => createNumberChoice(name, value)))
-        .setRequired(true)
-    ),
 
   new SlashCommandBuilder()
     .setName(CommandName.ban_user)

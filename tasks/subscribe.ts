@@ -1,9 +1,7 @@
 import { CommandInteraction, GuildMember, RoleResolvable } from 'discord.js';
-import * as Task from 'fp-ts/Task';
 import * as TaskOption from 'fp-ts/TaskOption';
 import findUserByMembers from '../utils/find_user_by_members';
 import { pipe } from 'fp-ts/function';
-import * as R from 'ramda';
 
 const addRoleFromMember = (roleId: RoleResolvable) => (member: GuildMember) =>
   TaskOption.tryCatch(() => member.roles.add(roleId));
