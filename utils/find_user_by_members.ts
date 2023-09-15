@@ -1,6 +1,6 @@
 import { GuildMemberManager, GuildMember, MessageMentions } from 'discord.js';
 import * as TaskOption from 'fp-ts/TaskOption';
-import { pipe, constant } from 'fp-ts/function';
+import { pipe } from 'fp-ts/function';
 import * as R from 'ramda';
 
 const findUserByMembers = (idOrMention: string) => (members: GuildMemberManager) =>

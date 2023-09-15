@@ -10,7 +10,6 @@ import { ChannelStoreRef } from '../store/exclude_channels';
 import addChannels from './add_channels';
 import removeChannels from './remove_channels';
 import listChannels from './list_channels';
-import banUserLegacy from './ban_user_legacy';
 import banUser from './ban_user';
 import subscribe from './subscribe';
 import unsubscribe from './unsubscribe';
@@ -31,7 +30,6 @@ function getOperationByCommand(
     [eqCommandName(CommandName.remove_channels), removeChannels(client, channelStoreRef)],
     [eqCommandName(CommandName.channel_list), listChannels(channelStoreRef)],
     [eqCommandName(CommandName.ban_user), banUser(client, votingStoreRef)],
-    [eqCommandName(CommandName.ban_user_legacy), banUserLegacy(client, votingStoreRef)],
     [
       eqCommandName(CommandName.timeout_info),
       (interaction) => TO.tryCatch(() => interaction.reply(listTimeoutChoices())),
